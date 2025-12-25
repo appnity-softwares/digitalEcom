@@ -21,7 +21,7 @@ import * as PreviewComponents from '../components/previews/ComponentPreviews';
 const Components = () => {
     const { showToast } = useToast();
     const [copiedCode, setCopiedCode] = useState(null);
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab, setActiveTab] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [fullscreenComponent, setFullscreenComponent] = useState(null);
@@ -29,15 +29,31 @@ const Components = () => {
 
     // Fetch categories and components
     const { data: categoriesData, isLoading: categoriesLoading } = useComponentCategories();
+
+    // Extract data arrays (service already extracts .data from API response)
+    const categories = categoriesData || [];
+
+    // Set initial activeTab to 'all' category ID once categories are loaded
+    useEffect(() => {
+        if (categories.length > 0 && !activeTab) {
+            const allCategory = categories.find(cat => cat.name === 'all');
+            if (allCategory) {
+                setActiveTab(allCategory.id);
+            }
+        }
+    }, [categories, activeTab]);
+
+    // Find the 'all' category to check if we should filter
+    const allCategory = categories.find(cat => cat.name === 'all');
+    const shouldFilter = activeTab && activeTab !== allCategory?.id;
+
     const { data: componentsData, isLoading: componentsLoading } = useComponents({
-        category: activeTab !== 'all' ? activeTab : undefined,
+        category: shouldFilter ? activeTab : undefined,
         search: searchQuery || undefined
     });
 
     const trackCopy = useTrackComponentCopy();
 
-    // Extract data arrays (service already extracts .data from API response)
-    const categories = categoriesData || [];
     const components = componentsData || [];
 
 
@@ -172,11 +188,11 @@ const Components = () => {
                         <div className="flex flex-wrap gap-4 justify-center">
                             {categories.map((category, index) => {
                                 const Icon = getIcon(category.icon);
-                                const isActive = activeTab === category.name;
+                                const isActive = activeTab === category.id;
                                 return (
                                     <motion.button
                                         key={category.id}
-                                        onClick={() => setActiveTab(category.name)}
+                                        onClick={() => setActiveTab(category.id)}
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: 0.6 + index * 0.05 }}
