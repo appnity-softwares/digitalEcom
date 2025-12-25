@@ -1,0 +1,862 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAUSED
+  TRIALING
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  CANCELLED
+}
+
+enum LicenseType {
+  PERSONAL
+  COMMERCIAL
+  EXTENDED
+}
+
+enum ItemType {
+  PRODUCT
+  DOC
+  SUBSCRIPTION
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ApiKeyTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+// ==================== USER ====================
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String?   // Nullable for OAuth users
+  avatar           String?
+  role             Role      @default(USER)
+  
+  // OAuth providers
+  googleId         String?   @unique
+  githubId         String?   @unique
+  
+  // Password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  
+  // Relations
+  subscription     Subscription?
+  orders           Order[]
+  apiKeys          ApiKey[]
+  reviews          Review[]
+  wishlist         Wishlist?
+  premiumDocsAuthored PremiumDoc[] @relation("AuthoredDocs")
+  
+  // Many-to-many for purchases
+  purchasedProducts Product[]    @relation("UserPurchasedProducts")
+  purchasedDocs     PremiumDoc[] @relation("UserPurchasedDocs")
+  templateRequests  TemplateRequest[]
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// ==================== SUBSCRIPTION ====================
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  planName              SubscriptionPlan   @default(FREE)
+  status                SubscriptionStatus @default(ACTIVE)
+  billingCycle          BillingCycle       @default(MONTHLY)
+  
+  stripeSubscriptionId  String?
+  stripeCustomerId      String?
+  razorpaySubscriptionId String?
+  razorpayCustomerId    String?
+  
+  startDate             DateTime           @default(now())
+  endDate               DateTime?
+  cancelledAt           DateTime?
+  cancelReason          String?
+  
+  pricePaid             Float              @default(0)
+  currency              String             @default("USD")
+  autoRenew             Boolean            @default(true)
+  features              String[]
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+// ==================== PRODUCT ====================
+
+model Product {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  image           String
+  images          String[]
+  category        String
+  description     String
+  longDescription String?
+  price           Float
+  discountPrice   Float?
+  
+  productType     String    @default("template")
+  techStack       String[]
+  
+  // Features
+  hasBackend      Boolean   @default(false)
+  hasFrontend     Boolean   @default(true)
+  hasDatabase     Boolean   @default(false)
+  hasMobileApp    Boolean   @default(false)
+  hasTests        Boolean   @default(false)
+  testCoverage    Int       @default(0)
+  
+  // Demo & Preview
+  liveDemo        String?
+  githubRepo      String?
+  
+  // Ratings & Stats
+  rating          Float     @default(0)
+  numReviews      Int       @default(0)
+  numSales        Int       @default(0)
+  numViews        Int       @default(0)
+  
+  // Status flags
+  isFeatured      Boolean   @default(false)
+  isBestseller    Boolean   @default(false)
+  isNew           Boolean   @default(false)
+  isTrending      Boolean   @default(false)
+  isFree          Boolean   @default(false)
+  
+  // Stock
+  countInStock    Int       @default(999)
+  
+  // Legacy fields
+  features        String[]
+  pages           String[]
+  previewUrl      String?
+  purchaseLink    String?
+  tags            String[]
+  
+  // Licenses (stored as JSON)
+  licenses        Json?
+  
+  // Documentation (stored as JSON)
+  documentation   Json?
+  
+  // Code preview (stored as JSON)
+  codePreview     Json?
+  
+  // Relations
+  orderItems      OrderItem[]
+  reviews         Review[]
+  wishlistItems   WishlistItem[]
+  purchasedBy     User[]       @relation("UserPurchasedProducts")
+  relatedDocs     PremiumDoc[] @relation("ProductRelatedDocs")
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ==================== ORDER ====================
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  items          OrderItem[]
+  
+  paymentMethod  String      @default("Card")
+  paymentId      String?
+  paymentStatus  String?
+  paymentProvider String?    // stripe or razorpay
+  
+  subtotal       Float       @default(0)
+  discount       Float       @default(0)
+  couponCode     String?
+  totalPrice     Float
+  currency       String      @default("USD")
+  
+  isPaid         Boolean     @default(false)
+  paidAt         DateTime?
+  orderStatus    OrderStatus @default(PENDING)
+  
+  // Download tracking
+  downloadCount  Int         @default(0)
+  maxDownloads   Int         @default(5)
+  downloadExpiry DateTime?
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model OrderItem {
+  id           String      @id @default(cuid())
+  orderId      String
+  order        Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId    String?
+  product      Product?    @relation(fields: [productId], references: [id])
+  
+  premiumDocId String?
+  premiumDoc   PremiumDoc? @relation(fields: [premiumDocId], references: [id])
+  
+  title        String
+  qty          Int         @default(1)
+  image        String
+  price        Float
+  itemType     ItemType    @default(PRODUCT)
+  licenseType  LicenseType @default(PERSONAL)
+  licenseKey   String?
+  
+  createdAt    DateTime    @default(now())
+}
+
+// ==================== PREMIUM DOC ====================
+
+model PremiumDoc {
+  id                  String     @id @default(cuid())
+  title               String
+  slug                String     @unique
+  description         String
+  contentMd           String     @db.Text
+  previewContentMd    String?    @db.Text
+  
+  category            String
+  price               Float      @default(0)
+  discountPrice       Float?
+  thumbnail           String?
+  
+  authorId            String
+  author              User       @relation("AuthoredDocs", fields: [authorId], references: [id])
+  
+  requiresSubscription Boolean   @default(false)
+  isFreePreview       Boolean    @default(false)
+  isPublished         Boolean    @default(false)
+  
+  tableOfContents     Json?      // Array of {title, anchor, level}
+  tags                String[]
+  readingTimeMinutes  Int        @default(10)
+  difficulty          Difficulty @default(INTERMEDIATE)
+  
+  pdfUrl              String?
+  views               Int        @default(0)
+  purchases           Int        @default(0)
+  
+  // Relations
+  orderItems          OrderItem[]
+  reviews             Review[]
+  wishlistItems       WishlistItem[]
+  purchasedBy         User[]     @relation("UserPurchasedDocs")
+  relatedProducts     Product[]  @relation("ProductRelatedDocs")
+  
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+// ==================== SAAS TOOL ====================
+
+model SaasTool {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  slug            String    @unique
+  description     String
+  longDescription String?
+  
+  icon            String?
+  thumbnail       String?
+  category        String    @default("Other")
+  
+  apiBaseUrl      String?
+  documentationUrl String?
+  
+  // Pricing tiers (stored as JSON)
+  pricing         Json?
+  
+  // Features (stored as JSON)
+  features        Json?
+  
+  // API endpoints documentation (stored as JSON)
+  endpoints       Json?
+  
+  // Code examples (stored as JSON)
+  codeExamples    Json?
+  
+  isActive        Boolean   @default(true)
+  isBeta          Boolean   @default(false)
+  requiresSubscription Boolean @default(false)
+  
+  // Stats
+  totalRequests   Int       @default(0)
+  activeUsers     Int       @default(0)
+  uptimePercentage Float    @default(99.9)
+  avgResponseTimeMs Int     @default(100)
+  
+  // Relations
+  apiKeys         ApiKey[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ==================== API KEY ====================
+
+model ApiKey {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  toolId         String
+  tool           SaasTool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  
+  name           String     @default("Default API Key")
+  keyPrefix      String
+  keyHash        String
+  
+  tier           ApiKeyTier @default(FREE)
+  usageCount     Int        @default(0)
+  usageLimit     Int        @default(100)
+  usageResetDate DateTime   @default(now())
+  
+  lastUsedAt     DateTime?
+  isActive       Boolean    @default(true)
+  expiresAt      DateTime?
+  
+  // Rate limiting
+  requestsPerMinute Int     @default(60)
+  requestsPerHour   Int     @default(1000)
+  
+  allowedOrigins String[]
+  allowedIps     String[]
+  
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  
+  @@unique([keyPrefix, keyHash])
+  @@index([userId, toolId])
+}
+
+// ==================== REVIEW ====================
+
+model Review {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  premiumDocId String?
+  premiumDoc   PremiumDoc? @relation(fields: [premiumDocId], references: [id], onDelete: Cascade)
+  
+  rating      Int      // 1-5 stars
+  title       String?
+  comment     String   @db.Text
+  
+  isVerifiedPurchase Boolean @default(false)
+  isApproved  Boolean  @default(true)
+  helpfulCount Int     @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, productId])
+  @@index([productId, rating])
+  @@index([premiumDocId, rating])
+}
+
+// ==================== COUPON ====================
+
+model Coupon {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  description     String?
+  
+  discountType    DiscountType @default(PERCENTAGE)
+  discountValue   Float     // Percentage (0-100) or fixed amount
+  
+  minOrderValue   Float?    // Minimum order value required
+  maxDiscount     Float?    // Maximum discount cap for percentage
+  
+  usageLimit      Int?      // Total usage limit
+  usageCount      Int       @default(0)
+  perUserLimit    Int       @default(1)
+  
+  validFrom       DateTime  @default(now())
+  validUntil      DateTime?
+  
+  isActive        Boolean   @default(true)
+  applicableTo    String[]  // Product IDs or categories, empty = all
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  usages          CouponUsage[]
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String
+  orderId   String?
+  
+  discountApplied Float
+  usedAt    DateTime @default(now())
+  
+  @@index([couponId, userId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+// ==================== WEBHOOK LOG ====================
+
+model WebhookLog {
+  id            String   @id @default(cuid())
+  provider      String   // razorpay, stripe, etc.
+  eventType     String   // payment.captured, refund.processed, etc.
+  eventId       String?  @unique
+  
+  payload       Json
+  headers       Json?
+  
+  status        WebhookStatus @default(RECEIVED)
+  errorMessage  String?
+  
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+  
+  @@index([provider, eventType])
+  @@index([createdAt])
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSING
+  SUCCESS
+  FAILED
+  IGNORED
+}
+
+// ==================== ANALYTICS ====================
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventType   String   // page_view, product_view, purchase, api_call, etc.
+  eventData   Json?
+  
+  userId      String?
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+  
+  productId   String?
+  toolId      String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+  @@index([productId])
+}
+
+// ==================== WISHLIST ====================
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  items     WishlistItem[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  wishlistId  String
+  wishlist    Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  premiumDocId String?
+  premiumDoc   PremiumDoc? @relation(fields: [premiumDocId], references: [id], onDelete: Cascade)
+  
+  addedAt     DateTime @default(now())
+  
+  @@unique([wishlistId, productId])
+  @@unique([wishlistId, premiumDocId])
+  @@index([wishlistId])
+}
+
+// ==================== API CALL LOG ====================
+
+model ApiCallLog {
+  id            String   @id @default(cuid())
+  apiKeyId      String
+  toolId        String
+  
+  endpoint      String
+  method        String
+  statusCode    Int
+  
+  requestBody   Json?
+  responseBody  Json?
+  
+  responseTimeMs Int
+  ipAddress     String?
+  userAgent     String?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([apiKeyId, createdAt])
+  @@index([toolId, createdAt])
+  @@index([createdAt])
+}
+
+// ==================== DOWNLOAD LOG ====================
+
+model DownloadLog {
+  id          String   @id @default(cuid())
+  userId      String
+  productId   String
+  orderId     String?
+  
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, productId])
+  @@index([createdAt])
+}
+
+// ==================== INVOICE ====================
+
+model Invoice {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  userId        String
+  
+  invoiceNumber String   @unique
+  pdfUrl        String?
+  
+  subtotal      Float
+  discount      Float    @default(0)
+  tax           Float    @default(0)
+  total         Float
+  
+  billingName   String?
+  billingEmail  String?
+  billingAddress Json?
+  
+  issuedAt      DateTime @default(now())
+  
+  @@index([userId])
+  @@index([invoiceNumber])
+}
+
+// ==================== TEMPLATE REQUEST ====================
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+model TemplateRequest {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String        @db.Text
+  category    String?
+  techStack   String[]
+  
+  votes       Int           @default(0)
+  voters      String[]      // Array of user IDs who voted
+  
+  status      RequestStatus @default(PENDING)
+  adminNotes  String?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// DYNAMIC COMPONENTS SYSTEM
+// ============================================
+
+model ComponentCategory {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  label       String
+  icon        String      // Icon name from lucide-react
+  gradient    String      // Tailwind gradient classes
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  components  Component[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Component {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  code        String             @db.Text
+  previewType String             // Type of preview component to render
+  categoryId  String
+  category    ComponentCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags        String[]           // Array of tags for better search
+  isActive    Boolean            @default(true)
+  isFeatured  Boolean            @default(false)
+  order       Int                @default(0)
+  views       Int                @default(0)
+  copies      Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+// ============================================
+// DYNAMIC TEMPLATES SYSTEM
+// ============================================
+
+model TemplateCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  label       String
+  icon        String
+  gradient    String
+  order       Int        @default(0)
+  isActive    Boolean    @default(true)
+  templates   Template[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Template {
+  id            String            @id @default(cuid())
+  title         String
+  description   String
+  previewImage  String?
+  demoUrl       String?
+  price         Float             @default(0)
+  features      String[]
+  techStack     String[]
+  categoryId    String
+  category      TemplateCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags          String[]
+  isActive      Boolean           @default(true)
+  isFeatured    Boolean           @default(false)
+  isPremium     Boolean           @default(false)
+  order         Int               @default(0)
+  views         Int               @default(0)
+  downloads     Int               @default(0)
+  rating        Float             @default(0)
+  ratingCount   Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+// ============================================
+// DYNAMIC DOCS SYSTEM
+// ============================================
+
+model DocCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  label       String
+  icon        String
+  gradient    String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  docs        Doc[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Doc {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  content     String      @db.Text
+  author      String
+  readTime    Int         // in minutes
+  difficulty  String      // Beginner, Intermediate, Advanced
+  categoryId  String
+  category    DocCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags        String[]
+  isActive    Boolean     @default(true)
+  isFeatured  Boolean     @default(false)
+  isPremium   Boolean     @default(false)
+  order       Int         @default(0)
+  views       Int         @default(0)
+  likes       Int         @default(0)
+  bookmarks   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+// ============================================
+// DYNAMIC API TOOLS SYSTEM
+// ============================================
+
+model ToolCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  label       String
+  icon        String
+  gradient    String
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  tools       APITool[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model APITool {
+  id            String       @id @default(cuid())
+  name          String
+  description   String
+  endpoint      String
+  method        String       // GET, POST, PUT, DELETE
+  parameters    Json         // Parameter schema
+  responseFormat Json        // Response schema
+  exampleRequest String      @db.Text
+  exampleResponse String     @db.Text
+  categoryId    String
+  category      ToolCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags          String[]
+  isActive      Boolean      @default(true)
+  isFeatured    Boolean      @default(false)
+  isPremium     Boolean      @default(false)
+  order         Int          @default(0)
+  apiCalls      Int          @default(0)
+  favorites     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+// ============================================
+// DYNAMIC MOBILE APPS SYSTEM
+// ============================================
+
+model AppCategory {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  label       String
+  icon        String
+  gradient    String
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  apps        MobileApp[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model MobileApp {
+  id            String      @id @default(cuid())
+  name          String
+  description   String
+  icon          String?
+  screenshots   String[]
+  platform      String      // iOS, Android, Cross-platform
+  price         Float       @default(0)
+  features      String[]
+  techStack     String[]
+  demoUrl       String?
+  categoryId    String
+  category      AppCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags          String[]
+  isActive      Boolean     @default(true)
+  isFeatured    Boolean     @default(false)
+  isPremium     Boolean     @default(false)
+  order         Int         @default(0)
+  views         Int         @default(0)
+  downloads     Int         @default(0)
+  rating        Float       @default(0)
+  ratingCount   Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+

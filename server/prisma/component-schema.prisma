@@ -1,0 +1,36 @@
+// Add to existing schema.prisma
+
+model ComponentCategory {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  label       String
+  icon        String      // Icon name from lucide-react
+  gradient    String      // Tailwind gradient classes
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  components  Component[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Component {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  code        String             @db.Text
+  previewType String             // Type of preview component to render
+  categoryId  String
+  category    ComponentCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags        String[]           // Array of tags for better search
+  isActive    Boolean            @default(true)
+  isFeatured  Boolean            @default(false)
+  order       Int                @default(0)
+  views       Int                @default(0)
+  copies      Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
