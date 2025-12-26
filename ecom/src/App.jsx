@@ -46,8 +46,8 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TemplatesDetails = lazy(() => import("./pages/TemplatesDetails"));
-const AdminDashboard = lazy(() => import("./pages/Admin/Dashboard"));
-const ProductEdit = lazy(() => import("./pages/Admin/ProductEdit"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminPanel"));
+const ProductEdit = lazy(() => import("./pages/admin/ProductEdit"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -62,13 +62,22 @@ const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
 const ImageUploadAPI = lazy(() => import("./pages/ImageUploadAPI"));
 const MobileTemplates = lazy(() => import("./pages/MobileTemplates"));
-const BlogEditor = lazy(() => import("./pages/Admin/BlogEditor"));
+const BlogEditor = lazy(() => import("./pages/admin/BlogEditor"));
 const APIPlayground = lazy(() => import("./pages/APIPlayground"));
 const Pricing = lazy(() => import("./pages/Pricing"));
-const AdminPanel = lazy(() => import("./pages/Admin/AdminPanel"));
+const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const TemplateRequests = lazy(() => import("./pages/TemplateRequests"));
 const Components = lazy(() => import("./pages/Components"));
 const R2UploadDemo = lazy(() => import("./pages/R2UploadDemo"));
+
+// Admin Panel Pages
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const AdminDashboardNew = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
+const AdminBlogs = lazy(() => import("./pages/admin/AdminBlogs"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 
 // Page transition variants
 const pageVariants = {
@@ -128,7 +137,7 @@ const App = () => {
                 <RecentlyViewedProvider>
                   <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300">
                     <OfflineBanner />
-                    <Navbar />
+                    {!location.pathname.startsWith('/admin') && <Navbar />}
                     <ScrollToTop />
 
                     <main className="flex-grow">
@@ -167,8 +176,18 @@ const App = () => {
                             <Route path="/r2-upload-demo" element={<AnimatedPage><R2UploadDemo /></AnimatedPage>} />
 
 
-                            {/* Admin Routes */}
-                            <Route path="/admin" element={<AdminPanel />} />
+                            {/* Admin Routes - New Admin Panel */}
+                            <Route path="/admin" element={<AdminLayout />}>
+                              <Route index element={<AdminDashboardNew />} />
+                              <Route path="users" element={<AdminUsers />} />
+                              <Route path="templates" element={<AdminTemplates />} />
+                              <Route path="blogs" element={<AdminBlogs />} />
+                              <Route path="orders" element={<AdminOrders />} />
+                              <Route path="payments" element={<AdminPayments />} />
+                            </Route>
+
+                            {/* Old Admin Routes - Keep for backward compatibility */}
+                            <Route path="/admin/old" element={<AdminPanel />} />
                             <Route path="/admin/dashboard" element={<AdminDashboard />} />
                             <Route path="/admin/product/:id/edit" element={<ProductEdit />} />
                             <Route path="/admin/blog/new" element={<BlogEditor />} />
@@ -180,7 +199,7 @@ const App = () => {
                       </Suspense>
                     </main>
 
-                    <Footer />
+                    {!location.pathname.startsWith('/admin') && <Footer />}
                     <GlobalLoginPopup />
                   </div>
                 </RecentlyViewedProvider>
