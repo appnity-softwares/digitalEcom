@@ -37,9 +37,13 @@ const AdminTemplates = () => {
         setLoading(true);
         try {
             const response = await getAdminTemplates({ search: searchQuery });
-            setTemplates(response.data);
+            // Handle different response structures
+            const templatesData = response.data || response.templates || response || [];
+            setTemplates(Array.isArray(templatesData) ? templatesData : []);
         } catch (err) {
+            console.error('Fetch templates error:', err);
             showToast('Failed to load templates', 'error');
+            setTemplates([]);
         } finally {
             setLoading(false);
         }
@@ -48,9 +52,12 @@ const AdminTemplates = () => {
     const fetchCategories = async () => {
         try {
             const response = await getTemplateCategories();
-            setCategories(response.data);
+            // Handle different response structures
+            const categoriesData = response.data || response.categories || response || [];
+            setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         } catch (err) {
-            console.error('Failed to load categories');
+            console.error('Failed to load categories', err);
+            setCategories([]);
         }
     };
 
@@ -60,7 +67,7 @@ const AdminTemplates = () => {
             setFormData({
                 title: template.title,
                 description: template.description,
-                categoryId: template.categoryId,
+                categoryId: template.categoryId || (categories.length > 0 ? categories[0].id : ''), // Safe access
                 price: template.price,
                 demoUrl: template.demoUrl || '',
                 downloadUrl: template.downloadUrl || '',
@@ -75,7 +82,7 @@ const AdminTemplates = () => {
             setFormData({
                 title: '',
                 description: '',
-                categoryId: categories[0]?.id || '',
+                categoryId: categories && categories.length > 0 ? categories[0].id : '',
                 price: 0,
                 demoUrl: '',
                 downloadUrl: '',
@@ -203,7 +210,7 @@ const AdminTemplates = () => {
                                         {template.downloads || 0}
                                     </div>
                                     <div className="ml-auto text-primary font-bold">
-                                        ₹{template.price}
+                                        ${template.price}
                                     </div>
                                 </div>
 
@@ -301,7 +308,7 @@ const AdminTemplates = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-foreground mb-2">Price (₹)</label>
+                                            <label className="block text-sm font-medium text-foreground mb-2">Price ($)</label>
                                             <input
                                                 type="number"
                                                 required
