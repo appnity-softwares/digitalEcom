@@ -25,7 +25,7 @@ export const useProducts = (filters = {}) => {
 
             try {
                 const res = await api.get(`/products?${params.toString()}`);
-                return res.data || { products: [] };
+                return res || { products: [] };
             } catch (error) {
                 console.error('Failed to fetch products:', error);
                 return { products: [] };
@@ -40,7 +40,7 @@ export const useProduct = (id) => {
         queryKey: ['product', id],
         queryFn: async () => {
             const res = await api.get(`/products/${id}`);
-            return res.data;
+            return res;
         },
         enabled: !!id,
         staleTime: 10 * 60 * 1000, // 10 minutes
@@ -65,7 +65,7 @@ export const useUpdateProduct = () => {
     return useMutation({
         mutationFn: async ({ id, productData }) => {
             const res = await api.put(`/products/${id}`, productData);
-            return res.data;
+            return res;
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -79,7 +79,7 @@ export const useFeaturedProducts = () => {
         queryKey: ['products', 'featured'],
         queryFn: async () => {
             const res = await api.get('/products/featured');
-            return res.data.products || res.data;
+            return res.products || res;
         },
         staleTime: 15 * 60 * 1000, // 15 minutes
     });
@@ -101,7 +101,7 @@ export const useDocs = (filters = {}) => {
             params.append('limit', limit);
 
             const res = await api.get(`/docs?${params.toString()}`);
-            return res.data;
+            return res;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -112,7 +112,7 @@ export const useDoc = (id) => {
         queryKey: ['doc', id],
         queryFn: async () => {
             const res = await api.get(`/docs/${id}`);
-            return res.data;
+            return res;
         },
         enabled: !!id,
         staleTime: 10 * 60 * 1000,
@@ -141,7 +141,7 @@ export const useSaasTools = (category = null) => {
         queryFn: async () => {
             const url = category ? `/saas?category=${category}` : '/saas';
             const res = await api.get(url);
-            return res.data.tools || res.data;
+            return res.tools || res;
         },
         staleTime: 10 * 60 * 1000,
     });
@@ -152,7 +152,7 @@ export const useSaasTool = (id) => {
         queryKey: ['saas-tool', id],
         queryFn: async () => {
             const res = await api.get(`/saas/${id}`);
-            return res.data.tool || res.data;
+            return res.tool || res;
         },
         enabled: !!id,
     });
@@ -175,7 +175,7 @@ export const useGenerateApiKey = () => {
     return useMutation({
         mutationFn: async ({ toolId }) => {
             const res = await api.post('/saas/generate-key', { toolId });
-            return res.data;
+            return res;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['my-api-keys'] });
@@ -188,7 +188,7 @@ export const useMyApiKeys = () => {
         queryKey: ['my-api-keys'],
         queryFn: async () => {
             const res = await api.get('/saas/my-keys');
-            return res.data.apiKeys || [];
+            return res.apiKeys || [];
         },
         staleTime: 2 * 60 * 1000,
     });
@@ -200,7 +200,7 @@ export const useGenerateToolApiKey = () => {
     return useMutation({
         mutationFn: async ({ toolId, name }) => {
             const res = await api.post(`/saas/${toolId}/generate-key`, { name });
-            return res.data.apiKey || res.data;
+            return res.apiKey || res;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['my-api-keys'] });
@@ -217,7 +217,7 @@ export const useMyOrders = () => {
         queryKey: ['my-orders'],
         queryFn: async () => {
             const res = await api.get('/orders/mine');
-            return res.data.orders || res.data;
+            return res.orders || res;
         },
         staleTime: 2 * 60 * 1000,
     });
@@ -228,7 +228,7 @@ export const useOrder = (id) => {
         queryKey: ['order', id],
         queryFn: async () => {
             const res = await api.get(`/orders/${id}`);
-            return res.data.order || res.data;
+            return res.order || res;
         },
         enabled: !!id,
     });
@@ -239,7 +239,7 @@ export const useAllOrders = () => {
         queryKey: ['admin', 'orders'],
         queryFn: async () => {
             const res = await api.get('/orders');
-            return res.data.orders || [];
+            return res.orders || [];
         },
         staleTime: 60 * 1000,
     });
@@ -257,7 +257,7 @@ export const useProductReviews = (productId, productType = 'product') => {
                 ? `/reviews/doc/${productId}`
                 : `/reviews/product/${productId}`;
             const res = await api.get(endpoint);
-            return res.data.reviews || [];
+            return res.reviews || [];
         },
         enabled: !!productId,
         staleTime: 5 * 60 * 1000,
@@ -270,7 +270,7 @@ export const useSubmitReview = () => {
     return useMutation({
         mutationFn: async (reviewData) => {
             const res = await api.post('/reviews', reviewData);
-            return res.data.review;
+            return res.review;
         },
         onSuccess: (data, variables) => {
             const type = variables.docId ? 'doc' : 'product';
@@ -289,7 +289,7 @@ export const useWishlist = () => {
         queryKey: ['wishlist'],
         queryFn: async () => {
             const res = await api.get('/wishlist');
-            return res.data.wishlist?.items || [];
+            return res.wishlist?.items || [];
         },
         staleTime: 2 * 60 * 1000,
     });
@@ -301,7 +301,7 @@ export const useAddToWishlist = () => {
     return useMutation({
         mutationFn: async ({ productId, premiumDocId }) => {
             const res = await api.post('/wishlist', { productId, premiumDocId });
-            return res.data;
+            return res;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['wishlist'] });
@@ -331,7 +331,7 @@ export const useInvoices = () => {
         queryKey: ['invoices'],
         queryFn: async () => {
             const res = await api.get('/invoices');
-            return res.data.invoices || [];
+            return res.invoices || [];
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -346,7 +346,7 @@ export const useCurrentSubscription = () => {
         queryKey: ['current-subscription'],
         queryFn: async () => {
             const res = await api.get('/subscriptions/current');
-            return res.data.subscription;
+            return res.subscription;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -361,7 +361,7 @@ export const useSearchSuggestions = (query) => {
         queryKey: ['search-suggestions', query],
         queryFn: async () => {
             const res = await api.get(`/search/suggestions?q=${encodeURIComponent(query)}`);
-            return res.data.suggestions || [];
+            return res.suggestions || [];
         },
         enabled: query.length >= 2,
         staleTime: 30 * 1000, // 30 seconds
@@ -373,7 +373,7 @@ export const usePopularSearches = () => {
         queryKey: ['popular-searches'],
         queryFn: async () => {
             const res = await api.get('/search/popular');
-            return res.data.popularSearches || [];
+            return res.popularSearches || [];
         },
         staleTime: 30 * 60 * 1000, // 30 minutes
     });
@@ -388,7 +388,7 @@ export const useAllUsers = () => {
         queryKey: ['admin', 'users'],
         queryFn: async () => {
             const res = await api.get('/users');
-            return res.data.users || [];
+            return res.users || [];
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -399,7 +399,7 @@ export const useUserStats = () => {
         queryKey: ['admin', 'user-stats'],
         queryFn: async () => {
             const res = await api.get('/users/stats');
-            return res.data.stats || {};
+            return res.stats || {};
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -450,9 +450,9 @@ export const useDashboardStats = () => {
         queryKey: ['admin', 'dashboard-stats'],
         queryFn: async () => {
             const res = await api.get('/dashboard/stats');
-            return res.data;
+            return res;
         },
-        staleTime: 60 * 1000, // 1 minute
+        staleTime: 5 * 1000, // 5 seconds
     });
 };
 
@@ -461,7 +461,7 @@ export const useRevenueChart = (period = '30d') => {
         queryKey: ['admin', 'revenue-chart', period],
         queryFn: async () => {
             const res = await api.get(`/dashboard/revenue?period=${period}`);
-            return res.data;
+            return res;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -472,7 +472,7 @@ export const useTopProducts = () => {
         queryKey: ['admin', 'top-products'],
         queryFn: async () => {
             const res = await api.get('/dashboard/top-products');
-            return res.data;
+            return res;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -483,9 +483,9 @@ export const useUserGrowth = () => {
         queryKey: ['admin', 'user-growth'],
         queryFn: async () => {
             const res = await api.get('/dashboard/user-growth');
-            return res.data;
+            return res;
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 5 * 1000,
     });
 };
 
@@ -497,7 +497,7 @@ export const useValidateCoupon = () => {
     return useMutation({
         mutationFn: async ({ code, orderTotal }) => {
             const res = await api.post('/coupons/validate', { code, orderTotal });
-            return res.data;
+            return res;
         },
     });
 };
@@ -555,7 +555,7 @@ export const usePrefetchProduct = () => {
             queryKey: ['product', productId],
             queryFn: async () => {
                 const res = await api.get(`/products/${productId}`);
-                return res.data.product || res.data;
+                return res.product || res;
             },
         });
     };

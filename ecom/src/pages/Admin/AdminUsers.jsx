@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Filter, Edit, Trash2, Shield, User,
-    Mail, Calendar, ChevronLeft, ChevronRight, X
+    Mail, Calendar, ChevronLeft, ChevronRight, X, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { getUsers, getUserById, updateUserRole, updateUserSubscription, deleteUser } from '../../services/adminService';
 import { useToast } from '../../context/ToastContext';
@@ -16,6 +16,8 @@ const AdminUsers = () => {
     const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
     const [selectedUser, setSelectedUser] = useState(null);
     const [showUserModal, setShowUserModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -72,15 +74,22 @@ const AdminUsers = () => {
         }
     };
 
-    const handleDeleteUser = async (userId) => {
-        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            return;
-        }
+    const handleDeleteClick = (userId) => {
+        setUserToDelete(userId);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
         try {
-            await deleteUser(userId);
+            await deleteUser(userToDelete);
             showToast('User deleted successfully', 'success');
             fetchUsers();
-            setShowUserModal(false);
+            setShowDeleteModal(false);
+            setUserToDelete(null);
+            // If we deleted the user currently being viewed in modal
+            if (selectedUser?.id === userToDelete) {
+                setShowUserModal(false);
+            }
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to delete user', 'error');
         }
@@ -89,9 +98,18 @@ const AdminUsers = () => {
     return (
         <div className="p-8">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold text-foreground mb-2">User Management</h1>
-                <p className="text-muted-foreground">Manage users, roles, and subscriptions</p>
+            <div className="mb-8 flex justify-between items-end">
+                <div>
+                    <h1 className="text-4xl font-bold text-foreground mb-2">User Management</h1>
+                    <p className="text-muted-foreground">Manage users, roles, and subscriptions</p>
+                </div>
+                <button
+                    onClick={fetchUsers}
+                    className="p-3 bg-secondary rounded-xl hover:bg-white/10 transition-colors border border-white/10"
+                    title="Refresh Users"
+                >
+                    <RefreshCw className={`w-5 h-5 text-foreground ${loading ? 'animate-spin' : ''}`} />
+                </button>
             </div>
 
             {/* Filters */}
@@ -172,8 +190,8 @@ const AdminUsers = () => {
                                             <td className="px-6 py-4 text-sm text-muted-foreground">{user.email}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'ADMIN'
-                                                        ? 'bg-purple-500/20 text-purple-500'
-                                                        : 'bg-blue-500/20 text-blue-500'
+                                                    ? 'bg-purple-500/20 text-purple-500'
+                                                    : 'bg-blue-500/20 text-blue-500'
                                                     }`}>
                                                     {user.role}
                                                 </span>
@@ -181,8 +199,8 @@ const AdminUsers = () => {
                                             <td className="px-6 py-4">
                                                 {user.subscription ? (
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.subscription.status === 'ACTIVE'
-                                                            ? 'bg-green-500/20 text-green-500'
-                                                            : 'bg-gray-500/20 text-gray-500'
+                                                        ? 'bg-green-500/20 text-green-500'
+                                                        : 'bg-gray-500/20 text-gray-500'
                                                         }`}>
                                                         {user.subscription.planName}
                                                     </span>
@@ -198,12 +216,12 @@ const AdminUsers = () => {
                                                     <button
                                                         onClick={() => handleViewUser(user.id)}
                                                         className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                                        title="View Details"
+                                                        title="Manage User"
                                                     >
                                                         <Edit className="w-4 h-4 text-blue-500" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        onClick={() => handleDeleteClick(user.id)}
                                                         className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                                                         title="Delete User"
                                                     >
@@ -301,8 +319,8 @@ const AdminUsers = () => {
                                         <button
                                             onClick={() => handleUpdateRole(selectedUser.id, 'USER')}
                                             className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedUser.role === 'USER'
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-secondary text-foreground hover:bg-secondary/80'
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-secondary text-foreground hover:bg-secondary/80'
                                                 }`}
                                         >
                                             User
@@ -310,8 +328,8 @@ const AdminUsers = () => {
                                         <button
                                             onClick={() => handleUpdateRole(selectedUser.id, 'ADMIN')}
                                             className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedUser.role === 'ADMIN'
-                                                    ? 'bg-purple-500 text-white'
-                                                    : 'bg-secondary text-foreground hover:bg-secondary/80'
+                                                ? 'bg-purple-500 text-white'
+                                                : 'bg-secondary text-foreground hover:bg-secondary/80'
                                                 }`}
                                         >
                                             Admin
@@ -328,8 +346,8 @@ const AdminUsers = () => {
                                                 key={plan}
                                                 onClick={() => handleUpdateSubscription(selectedUser.id, plan, 'ACTIVE')}
                                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedUser.subscription?.planName === plan
-                                                        ? 'bg-green-500 text-white'
-                                                        : 'bg-secondary text-foreground hover:bg-secondary/80'
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-secondary text-foreground hover:bg-secondary/80'
                                                     }`}
                                             >
                                                 {plan}
@@ -352,11 +370,56 @@ const AdminUsers = () => {
 
                                 {/* Delete Button */}
                                 <button
-                                    onClick={() => handleDeleteUser(selectedUser.id)}
+                                    onClick={() => handleDeleteClick(selectedUser.id)}
                                     className="w-full py-3 bg-red-500/20 text-red-500 rounded-xl font-semibold hover:bg-red-500/30 transition-all"
                                 >
                                     Delete User
                                 </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowDeleteModal(false)}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-card border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+                                    <AlertTriangle className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-foreground mb-2">Delete User?</h3>
+                                <p className="text-muted-foreground mb-6">
+                                    Are you sure you want to delete this user? This action will remove all their orders, subscriptions, and API keys. This cannot be undone.
+                                </p>
+                                <div className="flex gap-4 w-full">
+                                    <button
+                                        onClick={() => setShowDeleteModal(false)}
+                                        className="flex-1 px-4 py-2 bg-secondary text-foreground rounded-xl font-medium hover:bg-secondary/80 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
+                                    >
+                                        Delete User
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>
