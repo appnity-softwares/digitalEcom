@@ -18,8 +18,11 @@ const OAuthCallback = () => {
         }
 
         if (token) {
-            // Save token and fetch user data
-            localStorage.setItem('token', token);
+            // Save token with userToken key (OAuth is for regular users only)
+            localStorage.setItem('userToken', token);
+
+            // Remove old token format if exists
+            localStorage.removeItem('token');
 
             // Set user from token
             if (setUserFromToken) {

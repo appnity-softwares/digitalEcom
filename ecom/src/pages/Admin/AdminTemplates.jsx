@@ -17,13 +17,13 @@ const AdminTemplates = () => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        categoryId: '',
+        category: '',
         price: 0,
-        demoUrl: '',
-        downloadUrl: '',
-        previewImage: '',
+        liveDemo: '', // changed from demoUrl
+        githubRepo: '', // changed from downloadUrl (assuming repo/download link)
+        image: '', // changed from previewImage
         tags: [],
-        isPremium: false,
+        isPremium: false, // You might want to map this to isFree logic or keep custom
         isFeatured: false,
         isActive: true
     });
@@ -37,8 +37,8 @@ const AdminTemplates = () => {
         setLoading(true);
         try {
             const response = await getAdminTemplates({ search: searchQuery });
-            // Handle different response structures
-            const templatesData = response.data || response.templates || response || [];
+            // Products API returns { success: true, products: [...] }
+            const templatesData = response.data?.products || response.products || [];
             setTemplates(Array.isArray(templatesData) ? templatesData : []);
         } catch (err) {
             console.error('Fetch templates error:', err);
@@ -52,8 +52,7 @@ const AdminTemplates = () => {
     const fetchCategories = async () => {
         try {
             const response = await getTemplateCategories();
-            // Handle different response structures
-            const categoriesData = response.data || response.categories || response || [];
+            const categoriesData = response.data || [];
             setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         } catch (err) {
             console.error('Failed to load categories', err);
@@ -66,27 +65,27 @@ const AdminTemplates = () => {
             setEditingTemplate(template);
             setFormData({
                 title: template.title,
-                description: template.description,
-                categoryId: template.categoryId || (categories.length > 0 ? categories[0].id : ''), // Safe access
+                description: template.description || '',
+                category: template.category || (categories.length > 0 ? categories[0].id : ''),
                 price: template.price,
-                demoUrl: template.demoUrl || '',
-                downloadUrl: template.downloadUrl || '',
-                previewImage: template.previewImage || '',
+                liveDemo: template.liveDemo || '',
+                githubRepo: template.githubRepo || '',
+                image: template.image || '',
                 tags: template.tags || [],
-                isPremium: template.isPremium,
+                isPremium: !template.isFree, // Basic mapping, adjust if needed
                 isFeatured: template.isFeatured,
-                isActive: template.isActive
+                isActive: true // Product doesn't have isActive, default true
             });
         } else {
             setEditingTemplate(null);
             setFormData({
                 title: '',
                 description: '',
-                categoryId: categories && categories.length > 0 ? categories[0].id : '',
+                category: categories && categories.length > 0 ? categories[0].id : '',
                 price: 0,
-                demoUrl: '',
-                downloadUrl: '',
-                previewImage: '',
+                liveDemo: '',
+                githubRepo: '',
+                image: '',
                 tags: [],
                 isPremium: false,
                 isFeatured: false,
@@ -171,8 +170,8 @@ const AdminTemplates = () => {
                         >
                             {/* Preview Image */}
                             <div className="relative aspect-video bg-secondary/50 overflow-hidden">
-                                {template.previewImage ? (
-                                    <img src={template.previewImage} alt={template.title} className="w-full h-full object-cover" />
+                                {template.image ? (
+                                    <img src={template.image} alt={template.title} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
                                         <FileText className="w-16 h-16 text-muted-foreground/30" />
@@ -203,11 +202,11 @@ const AdminTemplates = () => {
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                                     <div className="flex items-center gap-1">
                                         <Eye className="w-3 h-3" />
-                                        {template.views || 0}
+                                        {template.numViews || 0}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Download className="w-3 h-3" />
-                                        {template.downloads || 0}
+                                        {template.numSales || 0}
                                     </div>
                                     <div className="ml-auto text-primary font-bold">
                                         ${template.price}
@@ -297,8 +296,8 @@ const AdminTemplates = () => {
                                             <label className="block text-sm font-medium text-foreground mb-2">Category</label>
                                             <select
                                                 required
-                                                value={formData.categoryId}
-                                                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                                value={formData.category} // Changed from categoryId
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                                 className="w-full px-4 py-3 bg-secondary border border-white/10 rounded-xl text-foreground focus:outline-none focus:border-primary"
                                             >
                                                 {categories.map((cat) => (
@@ -321,31 +320,31 @@ const AdminTemplates = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">Preview Image URL</label>
+                                        <label className="block text-sm font-medium text-foreground mb-2">Image URL</label>
                                         <input
                                             type="url"
-                                            value={formData.previewImage}
-                                            onChange={(e) => setFormData({ ...formData, previewImage: e.target.value })}
+                                            value={formData.image} // Changed from previewImage
+                                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                             className="w-full px-4 py-3 bg-secondary border border-white/10 rounded-xl text-foreground focus:outline-none focus:border-primary"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">Demo URL</label>
+                                        <label className="block text-sm font-medium text-foreground mb-2">Live Demo URL</label>
                                         <input
                                             type="url"
-                                            value={formData.demoUrl}
-                                            onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+                                            value={formData.liveDemo} // Changed from demoUrl
+                                            onChange={(e) => setFormData({ ...formData, liveDemo: e.target.value })}
                                             className="w-full px-4 py-3 bg-secondary border border-white/10 rounded-xl text-foreground focus:outline-none focus:border-primary"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-foreground mb-2">Download URL</label>
+                                        <label className="block text-sm font-medium text-foreground mb-2">GitHub Repo / Download URL</label>
                                         <input
                                             type="url"
-                                            value={formData.downloadUrl}
-                                            onChange={(e) => setFormData({ ...formData, downloadUrl: e.target.value })}
+                                            value={formData.githubRepo} // Changed from downloadUrl
+                                            onChange={(e) => setFormData({ ...formData, githubRepo: e.target.value })}
                                             className="w-full px-4 py-3 bg-secondary border border-white/10 rounded-xl text-foreground focus:outline-none focus:border-primary"
                                         />
                                     </div>

@@ -47,37 +47,44 @@ export const getUserStats = async () => {
 
 // ============ Template Management ============
 
+
+// ============ Template Management (Now using Products API) ============
+
 export const getAdminTemplates = async (params = {}) => {
-    const { category, search, featured, premium } = params;
-    const queryParams = new URLSearchParams();
-
-    if (category) queryParams.append('category', category);
-    if (search) queryParams.append('search', search);
-    if (featured !== undefined) queryParams.append('featured', featured);
-    if (premium !== undefined) queryParams.append('premium', premium);
-
-    const response = await api.get(`/templates?${queryParams.toString()}`);
+    // Force productType to 'template'
+    const queryParams = new URLSearchParams({ ...params, productType: 'template' });
+    const response = await api.get(`/products?${queryParams.toString()}`);
     return response;
 };
 
 export const createTemplate = async (templateData) => {
-    const response = await api.post('/templates', templateData);
+    // Ensure productType is set
+    const response = await api.post('/products', { ...templateData, productType: 'template' });
     return response;
 };
 
 export const updateTemplate = async (id, templateData) => {
-    const response = await api.put(`/templates/${id}`, templateData);
+    const response = await api.put(`/products/${id}`, templateData);
     return response;
 };
 
 export const deleteTemplate = async (id) => {
-    const response = await api.delete(`/templates/${id}`);
+    const response = await api.delete(`/products/${id}`);
     return response;
 };
 
+
 export const getTemplateCategories = async () => {
-    const response = await api.get('/templates/categories');
-    return response;
+    // Return static categories compatible with Product model
+    return {
+        data: [
+            { id: 'Templates', label: 'Templates' },
+            { id: 'UI Kits', label: 'UI Kits' },
+            { id: 'Boilerplates', label: 'Boilerplates' },
+            { id: 'Icon Packs', label: 'Icon Packs' },
+            { id: 'Code Utilities', label: 'Code Utilities' }
+        ]
+    };
 };
 
 // ============ Dashboard Stats ============

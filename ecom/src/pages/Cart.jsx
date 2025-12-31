@@ -14,8 +14,10 @@ const Cart = () => {
     const { success, error } = useToast();
 
     const total = cartItems.reduce((acc, item) => {
-        const price = Number(item.price.replace(/[^0-9.-]+/g, ""));
-        return acc + price;
+        const price = typeof item.price === 'number'
+            ? item.price
+            : Number(String(item.price).replace(/[^0-9.-]+/g, ""));
+        return acc + (isNaN(price) ? 0 : price);
     }, 0);
 
     const checkoutHandler = async () => {
@@ -26,7 +28,7 @@ const Cart = () => {
                 product: item._id || item.id,
                 title: item.title,
                 image: item.image,
-                price: item.price,
+                price: typeof item.price === 'number' ? item.price : parseFloat(item.price.replace(/[^0-9.-]+/g, "")),
                 qty: 1
             }));
 

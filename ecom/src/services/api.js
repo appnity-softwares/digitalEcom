@@ -4,12 +4,19 @@ const BASE_URL = '/api';
 
 
 const api = {
-    // Helper to get token
-    getToken: () => localStorage.getItem('token'),
+    // Helper to get token based on current route
+    getToken: () => {
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        if (isAdminRoute) {
+            return localStorage.getItem('adminToken') || localStorage.getItem('token');
+        } else {
+            return localStorage.getItem('userToken') || localStorage.getItem('token');
+        }
+    },
 
     // Standard Fetch wrapper
     request: async (endpoint, options = {}) => {
-        const token = localStorage.getItem('token');
+        const token = api.getToken();
         const headers = {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -26,10 +33,12 @@ const api = {
             const data = await res.json();
 
             if (!res.ok) {
-                // Handle 401 Unauthorized via global event or redirect logic if needed
+                // Handle 401 Unauthorized
                 if (res.status === 401) {
-                    // Optional: Window.location.href = '/login'; or dispatch event
+                    // Clear all tokens on unauthorized
                     localStorage.removeItem('token');
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('userToken');
                 }
                 throw new Error(data.message || 'API Error');
             }
