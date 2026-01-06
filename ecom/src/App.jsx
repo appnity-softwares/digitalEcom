@@ -68,16 +68,20 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const TemplateRequests = lazy(() => import("./pages/TemplateRequests"));
 const Components = lazy(() => import("./pages/Components"));
+const SubscriptionCheckout = lazy(() => import("./pages/SubscriptionCheckout"));
 const R2UploadDemo = lazy(() => import("./pages/R2UploadDemo"));
 
 // Admin Panel Pages
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
-const AdminDashboardNew = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminTemplates = lazy(() => import("./pages/admin/AdminTemplates"));
-const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
-const AdminBlogs = lazy(() => import("./pages/admin/AdminBlogs"));
-const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminDashboardNew = lazy(() => import("./pages/Admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/Admin/AdminUsers"));
+const AdminTemplates = lazy(() => import("./pages/Admin/AdminTemplates"));
+const AdminPayments = lazy(() => import("./pages/Admin/AdminPayments"));
+const AdminBlogs = lazy(() => import("./pages/Admin/AdminBlogs"));
+const AdminOrders = lazy(() => import("./pages/Admin/AdminOrders"));
+const AdminComponents = lazy(() => import("./pages/Admin/AdminComponents"));
+const AdminComponentCategories = lazy(() => import("./pages/Admin/AdminComponentCategories"));
+const AdminToolCategories = lazy(() => import("./pages/Admin/AdminToolCategories"));
 
 // Page transition variants
 const pageVariants = {
@@ -171,6 +175,7 @@ const App = () => {
                             <Route path="/mobile-templates" element={<AnimatedPage><MobileTemplates /></AnimatedPage>} />
                             <Route path="/api-playground" element={<AnimatedPage><APIPlayground /></AnimatedPage>} />
                             <Route path="/pricing" element={<AnimatedPage><Pricing /></AnimatedPage>} />
+                            <Route path="/subscription-checkout" element={<AnimatedPage><SubscriptionCheckout /></AnimatedPage>} />
                             <Route path="/template-requests" element={<AnimatedPage><TemplateRequests /></AnimatedPage>} />
                             <Route path="/components" element={<AnimatedPage><Components /></AnimatedPage>} />
                             <Route path="/r2-upload-demo" element={<AnimatedPage><R2UploadDemo /></AnimatedPage>} />
@@ -181,6 +186,9 @@ const App = () => {
                               <Route index element={<AdminDashboardNew />} />
                               <Route path="users" element={<AdminUsers />} />
                               <Route path="templates" element={<AdminTemplates />} />
+                              <Route path="components" element={<AdminComponents />} />
+                              <Route path="component-categories" element={<AdminComponentCategories />} />
+                              <Route path="tool-categories" element={<AdminToolCategories />} />
                               <Route path="blogs" element={<AdminBlogs />} />
                               <Route path="orders" element={<AdminOrders />} />
                               <Route path="payments" element={<AdminPayments />} />

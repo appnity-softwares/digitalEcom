@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard, Users, FileText, CreditCard,
-    LogOut, Menu, X, Settings
+    LogOut, Menu, X, Settings, Layers
 } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import AdminLoginModal from '../components/auth/AdminLoginModal';
@@ -41,6 +41,9 @@ const AdminLayout = () => {
         { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/admin/users', icon: Users, label: 'Users' },
         { path: '/admin/templates', icon: FileText, label: 'Templates' },
+        { path: '/admin/components', icon: FileText, label: 'Components' },
+        { path: '/admin/component-categories', icon: Layers, label: 'Categories' },
+        { path: '/admin/tool-categories', icon: Layers, label: 'Tool Categories' },
         { path: '/admin/blogs', icon: FileText, label: 'Blogs' },
         { path: '/admin/orders', icon: CreditCard, label: 'Orders' },
         { path: '/admin/payments', icon: CreditCard, label: 'Payments' },

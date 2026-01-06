@@ -575,6 +575,45 @@ export const useComponentCategories = () => {
     });
 };
 
+export const useCreateComponentCategory = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (categoryData) => {
+            const { createCategory } = await import('../services/componentService');
+            return await createCategory(categoryData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['componentCategories'] });
+        },
+    });
+};
+
+export const useUpdateComponentCategory = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, categoryData }) => {
+            const { updateCategory } = await import('../services/componentService');
+            return await updateCategory(id, categoryData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['componentCategories'] });
+        },
+    });
+};
+
+export const useDeleteComponentCategory = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id) => {
+            const { deleteCategory } = await import('../services/componentService');
+            return await deleteCategory(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['componentCategories'] });
+        },
+    });
+};
+
 // Get components with filters
 export const useComponents = (filters = {}) => {
     return useQuery({
@@ -593,6 +632,47 @@ export const useTrackComponentCopy = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['components'] });
         }
+    });
+};
+
+export const useCreateComponent = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (componentData) => {
+            const { createComponent } = await import('../services/componentService');
+            return await createComponent(componentData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['components'] });
+            queryClient.invalidateQueries({ queryKey: ['componentCategories'] });
+        },
+    });
+};
+
+export const useUpdateComponent = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, componentData }) => {
+            const { updateComponent } = await import('../services/componentService');
+            return await updateComponent(id, componentData);
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['components'] });
+            queryClient.invalidateQueries({ queryKey: ['component', variables.id] });
+        },
+    });
+};
+
+export const useDeleteComponent = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id) => {
+            const { deleteComponent } = await import('../services/componentService');
+            return await deleteComponent(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['components'] });
+        },
     });
 };
 

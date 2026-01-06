@@ -90,25 +90,8 @@ const Pricing = () => {
             navigate('/contact');
             return;
         }
-
-        setLoading(planId);
-        try {
-            const res = await api.post('/subscriptions/create', {
-                planId,
-                billingCycle
-            });
-
-            if (res.data.paymentUrl) {
-                window.location.href = res.data.paymentUrl;
-            } else {
-                showToast('Subscription activated!', 'success');
-                navigate('/profile');
-            }
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to subscribe', 'error');
-        } finally {
-            setLoading(null);
-        }
+        // Redirect to subscription checkout page
+        navigate(`/subscription-checkout?plan=${planId}&billing=${billingCycle}`);
     };
 
     const getPrice = (plan) => {

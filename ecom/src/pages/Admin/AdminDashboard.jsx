@@ -22,47 +22,48 @@ const AdminDashboard = () => {
     const statCards = [
         {
             title: 'Total Revenue',
-            value: `$${stats.totalRevenue?.toLocaleString() || 0}`,
+            value: `₹${(stats.stats?.revenue?.thisMonth || 0).toLocaleString()}`,
             icon: DollarSign,
             gradient: 'from-green-500 to-emerald-500',
             link: '/admin/users'
         },
         {
             title: 'Total Orders',
-            value: stats.totalOrders || 0,
+            value: stats.stats?.orders?.total || 0,
             icon: ShoppingCart,
             gradient: 'from-blue-500 to-cyan-500',
             link: '/admin/users'
         },
         {
             title: 'Total Users',
-            value: stats.totalUsers || 0,
+            value: stats.stats?.users?.total || 0,
             icon: Users,
             gradient: 'from-purple-500 to-pink-500',
             link: '/admin/users'
         },
         {
             title: 'Products',
-            value: stats.totalProducts || 0,
+            value: stats.stats?.content?.products || 0,
             icon: Package,
             gradient: 'from-orange-500 to-red-500',
             link: '/admin/templates'
         },
         {
-            title: 'Blog Posts',
-            value: stats.totalBlogs || 0,
+            title: 'SaaS Tools',
+            value: stats.stats?.content?.saasTools || 0,
             icon: FileText,
             gradient: 'from-cyan-500 to-blue-500',
             link: '/admin/templates'
         },
         {
             title: 'Active Subscriptions',
-            value: stats.activeSubscriptions || 0,
+            value: stats.stats?.subscriptions?.active || 0,
             icon: Star,
             gradient: 'from-yellow-500 to-orange-500',
             link: '/admin/users?filter=subscribed'
         }
     ];
+
 
     const loading = statsLoading || ordersLoading || usersLoading;
 

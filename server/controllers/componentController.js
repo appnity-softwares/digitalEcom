@@ -7,8 +7,12 @@ const prisma = require('../config/prisma');
  * @access  Public
  */
 const getCategories = asyncHandler(async (req, res) => {
+    const { status } = req.query;
+
     const categories = await prisma.componentCategory.findMany({
-        where: { isActive: true },
+        where: {
+            ...(status !== 'all' && { isActive: true })
+        },
         orderBy: { order: 'asc' },
         include: {
             _count: {
@@ -29,10 +33,10 @@ const getCategories = asyncHandler(async (req, res) => {
  * @access  Public
  */
 const getComponents = asyncHandler(async (req, res) => {
-    const { category, search, featured } = req.query;
+    const { category, search, featured, status } = req.query;
 
     const where = {
-        isActive: true,
+        ...(status !== 'all' && { isActive: true }),
         ...(category && category !== 'all' && { categoryId: category }),
         ...(featured === 'true' && { isFeatured: true }),
         ...(search && {
@@ -205,6 +209,102 @@ const deleteComponent = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Create component category (Admin only)
+ * @route   POST /api/components/categories
+ * @access  Private/Admin
+ */
+const createCategory = asyncHandler(async (req, res) => {
+    const { name, label, icon, gradient } = req.body;
+
+    if (!name || !label) {
+        res.status(400);
+        throw new Error('Name and label are required');
+    }
+
+    const categoryExists = await prisma.componentCategory.findUnique({
+        where: { name }
+    });
+
+    if (categoryExists) {
+        res.status(400);
+        throw new Error('Category already exists');
+    }
+
+    const category = await prisma.componentCategory.create({
+        data: {
+            name,
+            label,
+            icon: icon || 'Box',
+            gradient: gradient || 'from-indigo-500 to-purple-500',
+            order: req.body.order || 0,
+            isActive: req.body.isActive !== undefined ? req.body.isActive : true
+        }
+    });
+
+    res.status(201).json({
+        success: true,
+        data: category
+    });
+});
+
+/**
+ * @desc    Update component category (Admin only)
+ * @route   PUT /api/components/categories/:id
+ * @access  Private/Admin
+ */
+const updateCategory = asyncHandler(async (req, res) => {
+    const category = await prisma.componentCategory.findUnique({
+        where: { id: req.params.id }
+    });
+
+    if (!category) {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+
+    const updatedCategory = await prisma.componentCategory.update({
+        where: { id: req.params.id },
+        data: req.body
+    });
+
+    res.json({
+        success: true,
+        data: updatedCategory
+    });
+});
+
+/**
+ * @desc    Delete component category (Admin only)
+ * @route   DELETE /api/components/categories/:id
+ * @access  Private/Admin
+ */
+const deleteCategory = asyncHandler(async (req, res) => {
+    const category = await prisma.componentCategory.findUnique({
+        where: { id: req.params.id },
+        include: { _count: { select: { components: true } } }
+    });
+
+    if (!category) {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+
+    if (category._count.components > 0) {
+        res.status(400);
+        throw new Error(`Cannot delete category with ${category._count.components} components. Please move or delete them first.`);
+    }
+
+    await prisma.componentCategory.delete({
+        where: { id: req.params.id }
+    });
+
+    res.json({
+        success: true,
+        message: 'Category deleted'
+    });
+});
+
 module.exports = {
     getCategories,
     getComponents,
@@ -212,5 +312,8 @@ module.exports = {
     trackCopy,
     createComponent,
     updateComponent,
-    deleteComponent
+    deleteComponent,
+    createCategory,
+    updateCategory,
+    deleteCategory
 };

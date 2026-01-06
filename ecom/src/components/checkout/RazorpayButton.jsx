@@ -11,7 +11,8 @@ const RazorpayButton = ({
     onError,
     buttonText = 'Pay Now',
     disabled = false,
-    className = ''
+    className = '',
+    extraData = {}
 }) => {
     const [loading, setLoading] = useState(false);
     const { showToast } = useToast();
@@ -28,7 +29,8 @@ const RazorpayButton = ({
             const { data } = await api.post(endpoint, {
                 amount,
                 orderId,
-                type
+                type,
+                ...extraData
             });
 
             // Load Razorpay script if not loaded

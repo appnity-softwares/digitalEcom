@@ -30,8 +30,8 @@ const Components = () => {
     // Fetch categories and components
     const { data: categoriesData, isLoading: categoriesLoading } = useComponentCategories();
 
-    // Extract data arrays (service already extracts .data from API response)
-    const categories = categoriesData || [];
+    // Extract data arrays (service returns { success: true, data: [...] })
+    const categories = categoriesData?.data || [];
 
     // Set initial activeTab to 'all' category ID once categories are loaded
     useEffect(() => {

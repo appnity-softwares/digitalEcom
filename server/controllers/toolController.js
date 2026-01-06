@@ -85,4 +85,69 @@ const deleteTool = asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Tool deleted' });
 });
 
-module.exports = { getCategories, getTools, getTool, trackAPICall, createTool, updateTool, deleteTool };
+const createCategory = asyncHandler(async (req, res) => {
+    const { name, label, icon, gradient } = req.body;
+    if (!name || !label) {
+        res.status(400);
+        throw new Error('Name and label are required');
+    }
+    const categoryExists = await prisma.toolCategory.findUnique({ where: { name } });
+    if (categoryExists) {
+        res.status(400);
+        throw new Error('Category already exists');
+    }
+    const category = await prisma.toolCategory.create({
+        data: {
+            name,
+            label,
+            icon: icon || 'Wrench',
+            gradient: gradient || 'from-indigo-500 to-purple-500',
+            order: req.body.order || 0,
+            isActive: req.body.isActive !== undefined ? req.body.isActive : true
+        }
+    });
+    res.status(201).json({ success: true, data: category });
+});
+
+const updateCategory = asyncHandler(async (req, res) => {
+    const category = await prisma.toolCategory.findUnique({ where: { id: req.params.id } });
+    if (!category) {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+    const updatedCategory = await prisma.toolCategory.update({
+        where: { id: req.params.id },
+        data: req.body
+    });
+    res.json({ success: true, data: updatedCategory });
+});
+
+const deleteCategory = asyncHandler(async (req, res) => {
+    const category = await prisma.toolCategory.findUnique({
+        where: { id: req.params.id },
+        include: { _count: { select: { tools: true } } }
+    });
+    if (!category) {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+    if (category._count.tools > 0) {
+        res.status(400);
+        throw new Error(`Cannot delete category with ${category._count.tools} tools. Please move or delete them first.`);
+    }
+    await prisma.toolCategory.delete({ where: { id: req.params.id } });
+    res.json({ success: true, message: 'Category deleted' });
+});
+
+module.exports = {
+    getCategories,
+    getTools,
+    getTool,
+    trackAPICall,
+    createTool,
+    updateTool,
+    deleteTool,
+    createCategory,
+    updateCategory,
+    deleteCategory
+};
