@@ -170,6 +170,7 @@ const ScreenshotDemo = () => {
             });
             showToast('Screenshot captured!', 'success');
         } catch (err) {
+            console.error('Screenshot error:', err);
             setError('Failed to capture screenshot. Please try again.');
         } finally {
             setLoading(false);
@@ -276,7 +277,7 @@ Body: {
                     </div>
                 )}
 
-                {error && (
+                {error && !result && (
                     <div className="aspect-video bg-destructive/10 rounded-xl flex items-center justify-center text-destructive border border-destructive/20">
                         {error}
                     </div>
