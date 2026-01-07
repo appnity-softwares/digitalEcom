@@ -10,6 +10,7 @@ import { Filter, Search, X } from 'lucide-react';
 const Templates = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const keyword = searchParams.get('search') || '';
+    const debounceRef = React.useRef(null);
 
     // Filter states
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -99,6 +100,37 @@ const Templates = () => {
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Filter className="w-4 h-4" />
                                     <span className="text-sm font-medium">Filters:</span>
+                                </div>
+
+                                {/* Search Input */}
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search templates..."
+                                        defaultValue={keyword}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (debounceRef.current) clearTimeout(debounceRef.current);
+                                            debounceRef.current = setTimeout(() => {
+                                                setSearchParams(prev => {
+                                                    const newParams = new URLSearchParams(prev);
+                                                    if (value) {
+                                                        newParams.set('search', value);
+                                                    } else {
+                                                        newParams.delete('search');
+                                                    }
+                                                    return newParams;
+                                                });
+                                            }, 500);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                setSearchParams({ search: e.target.value });
+                                            }
+                                        }}
+                                        className="pl-9 pr-4 py-2 bg-secondary/50 border border-white/10 rounded-lg text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all w-48 md:w-64 placeholder:text-muted-foreground/50"
+                                    />
                                 </div>
 
                                 {/* Product Type Filter */}

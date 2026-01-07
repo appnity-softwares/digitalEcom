@@ -37,7 +37,7 @@ const Footer = () => {
     };
 
     return (
-        <footer className="bg-background border-t border-white/5 relative overflow-hidden">
+        <footer className="bg-background border-t border-gray-200 dark:border-white/5 relative overflow-hidden">
             {/* Ambient Background Glow */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -93,7 +93,7 @@ const Footer = () => {
                 {/* Newsletter (Optional enhancement - can be added here) */}
 
                 {/* Bottom */}
-                <div className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="mt-20 pt-8 border-t border-gray-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
                     <p className="text-sm text-muted-foreground">
                         © {new Date().getFullYear()} CodeStudio. All rights reserved.
                     </p>

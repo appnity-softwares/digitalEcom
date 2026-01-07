@@ -126,7 +126,7 @@ const MobileTemplates = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="max-w-3xl"
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-secondary/50 border border-border/50">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-secondary/50 border border-gray-200 dark:border-white/10">
                             <Smartphone className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium text-foreground">
                                 Mobile App Templates
@@ -149,7 +149,7 @@ const MobileTemplates = () => {
                                 { icon: Shield, text: 'Free Updates' },
                                 { icon: Globe, text: 'Cross Platform' }
                             ].map(({ icon: Icon, text }) => (
-                                <div key={text} className="px-3 py-1.5 rounded-full bg-secondary border border-border/50 flex items-center gap-2 text-sm text-foreground">
+                                <div key={text} className="px-3 py-1.5 rounded-full bg-secondary border border-gray-200 dark:border-white/10 flex items-center gap-2 text-sm text-foreground">
                                     <Icon className="w-4 h-4 text-primary" />
                                     {text}
                                 </div>
@@ -160,7 +160,7 @@ const MobileTemplates = () => {
             </section>
 
             {/* Filters & Search */}
-            <section className="py-6 border-y border-border/40 bg-background/50 backdrop-blur-sm sticky top-16 z-30">
+            <section className="py-6 border-y border-gray-200 dark:border-white/10 bg-background/50 backdrop-blur-sm sticky top-16 z-30">
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="flex flex-wrap gap-4 items-center justify-between">
                         {/* Search */}
@@ -171,7 +171,7 @@ const MobileTemplates = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search templates..."
-                                className="w-full bg-secondary/50 border border-border/50 text-foreground pl-12 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground"
+                                className="w-full bg-secondary/50 border border-gray-200 dark:border-white/10 text-foreground pl-12 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground"
                             />
                         </div>
 
@@ -203,7 +203,7 @@ const MobileTemplates = () => {
                         <select
                             value={filters.sortBy}
                             onChange={(e) => setFilters(f => ({ ...f, sortBy: e.target.value }))}
-                            className="bg-secondary/50 border border-border/50 text-foreground px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            className="bg-secondary/50 border border-gray-200 dark:border-white/10 text-foreground px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         >
                             {sortOptions.map(s => (
                                 <option key={s.id} value={s.id}>{s.label}</option>
@@ -216,7 +216,7 @@ const MobileTemplates = () => {
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
-                            className="md:hidden mt-4 pt-4 border-t border-border/40"
+                            className="md:hidden mt-4 pt-4 border-t border-gray-200 dark:border-white/10"
                         >
                             <div className="space-y-4">
                                 <div>
@@ -263,7 +263,7 @@ const MobileTemplates = () => {
                     {loading ? (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className="glass-card h-[340px] animate-pulse p-4 rounded-xl border border-white/5 bg-secondary/20">
+                                <div key={i} className="glass-card h-[340px] animate-pulse p-4 rounded-xl border border-gray-200 dark:border-white/5 bg-secondary/20">
                                     <div className="aspect-video bg-muted/20 rounded-lg mb-4" />
                                     <div className="h-5 bg-muted/20 rounded w-3/4 mb-2" />
                                     <div className="h-4 bg-muted/20 rounded w-1/2" />

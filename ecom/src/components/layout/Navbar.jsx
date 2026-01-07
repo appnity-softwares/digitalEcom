@@ -49,7 +49,7 @@ const Navbar = () => {
             debounceRef.current = setTimeout(async () => {
                 try {
                     const res = await api.get(`/search/suggestions?q=${encodeURIComponent(value)}`);
-                    setSuggestions(res.data.suggestions || []);
+                    setSuggestions(res.suggestions || []);
                 } catch (err) {
                     console.log('Search error');
                 } finally {
@@ -105,7 +105,7 @@ const Navbar = () => {
                     </Link>
 
                     {/* Desktop Nav Links */}
-                    <div className="hidden lg:flex items-center bg-secondary/50 backdrop-blur-md rounded-full px-2 py-1 border border-white/5">
+                    <div className="hidden lg:flex items-center bg-secondary/50 backdrop-blur-md rounded-full px-2 py-1 border border-gray-200 dark:border-white/5">
                         {navLinks.map((link) => (
                             <NavLink
                                 key={link.path}
@@ -143,8 +143,8 @@ const Navbar = () => {
                                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                                         className="absolute right-0 top-12 w-80 z-50 p-2"
                                     >
-                                        <div className="glass-card rounded-xl p-3 shadow-2xl ring-1 ring-white/10">
-                                            <div className="flex items-center gap-3 bg-secondary/50 px-3 py-2 rounded-lg border border-white/5">
+                                        <div className="glass-card rounded-xl p-3 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+                                            <div className="flex items-center gap-3 bg-secondary/50 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/5">
                                                 <Search className="w-4 h-4 text-muted-foreground" />
                                                 <input
                                                     type="text"
@@ -171,10 +171,10 @@ const Navbar = () => {
                                                             }}
                                                             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 text-left text-sm transition-colors group"
                                                         >
-                                                            {s.type === 'product' ?
-                                                                <Package className="w-4 h-4 text-muted-foreground group-hover:text-primary" /> :
-                                                                <FileText className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                                                            }
+                                                            {s.type === 'product' && <Package className="w-4 h-4 text-muted-foreground group-hover:text-primary" />}
+                                                            {s.type === 'doc' && <FileText className="w-4 h-4 text-muted-foreground group-hover:text-primary" />}
+                                                            {s.type === 'tool' && <Zap className="w-4 h-4 text-muted-foreground group-hover:text-primary" />}
+                                                            {s.type === 'component' && <Code className="w-4 h-4 text-muted-foreground group-hover:text-primary" />}
                                                             <span className="text-foreground group-hover:text-primary transition-colors">{s.text}</span>
                                                         </button>
                                                     ))}
@@ -242,16 +242,16 @@ const Navbar = () => {
                                 </Link>
 
                                 <div className="absolute right-0 top-full mt-4 w-56 glass-card p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100">
-                                    <div className="px-3 py-2 mb-2 border-b border-white/5">
+                                    <div className="px-3 py-2 mb-2 border-b border-gray-100 dark:border-white/5">
                                         <p className="text-sm font-medium">{user.name}</p>
                                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                     </div>
-                                    <Link to="/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm transition-colors">
+                                    <Link to="/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-white/5 text-sm transition-colors">
                                         <User className="w-4 h-4" />
                                         Profile
                                     </Link>
                                     {user.role === 'ADMIN' && (
-                                        <Link to="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm transition-colors">
+                                        <Link to="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-white/5 text-sm transition-colors">
                                             <Zap className="w-4 h-4 text-yellow-500" />
                                             Admin Panel
                                         </Link>
@@ -277,7 +277,7 @@ const Navbar = () => {
                             </motion.button>
                         )}
 
-                        {/* Mobile Menu Button */}
+                        {/* Mobile Menu Button - unchanged */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden p-2 text-foreground"
@@ -303,7 +303,7 @@ const Navbar = () => {
                                     key={link.path}
                                     to={link.path}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="block p-4 rounded-2xl bg-secondary/30 hover:bg-primary/10 text-lg font-medium transition-colors border border-white/5"
+                                    className="block p-4 rounded-2xl bg-secondary/30 hover:bg-primary/10 text-lg font-medium transition-colors border border-gray-200 dark:border-white/5"
                                 >
                                     {link.name}
                                 </Link>

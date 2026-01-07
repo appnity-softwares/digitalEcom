@@ -51,7 +51,7 @@ const TemplateGrid = ({ items, limit }) => {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Link to={`/templates/${template._id || template.id}`} className="group flex flex-col h-full bg-card/10 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+              <Link to={`/templates/${template._id || template.id}`} className="group flex flex-col h-full bg-white dark:bg-card/10 backdrop-blur-md border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-500 shadow-sm dark:shadow-none hover:shadow-2xl hover:shadow-primary/10">
 
                 {/* Image Container */}
                 <div className="w-full aspect-[4/3] bg-secondary/20 relative overflow-hidden">
@@ -109,12 +109,12 @@ const TemplateGrid = ({ items, limit }) => {
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-lg font-bold text-foreground">
-                        {template.price}
+                        {template.price}$
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+                  <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
                     {template.rating > 0 && (
                       <StarRating rating={template.rating} numReviews={template.numReviews} size="sm" />
                     )}
@@ -132,7 +132,7 @@ const TemplateGrid = ({ items, limit }) => {
 
         {limit && (
           <div className="flex justify-center mt-8">
-            <Link to="/templates" className="px-8 py-3 rounded-full border border-white/10 hover:bg-secondary/50 text-foreground font-medium transition-all flex items-center gap-2 group">
+            <Link to="/templates" className="px-8 py-3 rounded-full border border-gray-200 dark:border-white/10 hover:bg-secondary/50 text-foreground font-medium transition-all flex items-center gap-2 group">
               View All Assets
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />

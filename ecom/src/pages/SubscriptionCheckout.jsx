@@ -145,14 +145,11 @@ const SubscriptionCheckout = () => {
                                 onSuccess={() => navigate('/profile')}
                             />
                         ) : (
-                            <div className="text-center p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                                <p className="text-yellow-500 mb-2">Please login to continue</p>
-                                <button
-                                    onClick={() => navigate('/login')}
-                                    className="px-6 py-2 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
-                                >
-                                    Login
-                                </button>
+                            <div className="text-center p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                                <p className="text-yellow-500 font-medium mb-2">Login Required</p>
+                                <p className="text-muted-foreground text-sm">
+                                    Please sign in using the button in the top navigation bar to complete your subscription.
+                                </p>
                             </div>
                         )}
 

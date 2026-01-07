@@ -23,9 +23,18 @@ const Components = () => {
     const [copiedCode, setCopiedCode] = useState(null);
     const [activeTab, setActiveTab] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [fullscreenComponent, setFullscreenComponent] = useState(null);
     const [hoveredCard, setHoveredCard] = useState(null);
+
+    // Debounce search query
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     // Fetch categories and components
     const { data: categoriesData, isLoading: categoriesLoading } = useComponentCategories();
@@ -49,7 +58,7 @@ const Components = () => {
 
     const { data: componentsData, isLoading: componentsLoading } = useComponents({
         category: shouldFilter ? activeTab : undefined,
-        search: searchQuery || undefined
+        search: debouncedSearch || undefined
     });
 
     const trackCopy = useTrackComponentCopy();

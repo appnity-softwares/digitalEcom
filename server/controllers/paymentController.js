@@ -38,7 +38,9 @@ const createOrder = asyncHandler(async (req, res) => {
     };
 
     try {
+        console.log('Creating Razorpay order with options:', options);
         const order = await getRazorpay().orders.create(options);
+        console.log('Razorpay order created successfully:', order.id);
 
         res.json({
             success: true,
@@ -51,9 +53,9 @@ const createOrder = asyncHandler(async (req, res) => {
             key_id: process.env.RAZORPAY_KEY_ID
         });
     } catch (error) {
-        console.error('Razorpay order error:', error);
+        console.error('Razorpay order creation FAILED:', error);
         res.status(500);
-        throw new Error('Failed to create payment order');
+        throw new Error('Failed to create payment order: ' + error.message);
     }
 });
 
@@ -210,7 +212,9 @@ const createSubscriptionOrder = asyncHandler(async (req, res) => {
     };
 
     try {
+        console.log('Creating Razorpay subscription order:', options);
         const order = await getRazorpay().orders.create(options);
+        console.log('Subscription order created:', order.id);
 
         res.json({
             success: true,

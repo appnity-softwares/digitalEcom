@@ -104,6 +104,7 @@ app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/r2', require('./routes/r2Routes'));
 app.use('/api/tools', require('./routes/toolsRoutes'));
+app.use('/api/tool-categories', require('./routes/toolCategoryRoutes'));
 app.use('/api/razorpay', require('./routes/razorpayRoutes'));
 app.use('/api/components', require('./routes/componentRoutes'));
 app.use('/api/templates', require('./routes/templateRoutes'));

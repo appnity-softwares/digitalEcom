@@ -76,11 +76,6 @@ const Pricing = () => {
     ];
 
     const handleSubscribe = async (planId) => {
-        if (!user) {
-            showToast('Please login to subscribe', 'info');
-            return;
-        }
-
         if (planId === 'free') {
             navigate('/profile');
             return;

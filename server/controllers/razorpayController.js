@@ -205,6 +205,10 @@ const createSubscriptionOrder = asyncHandler(async (req, res) => {
 
     const order = await razorpay.orders.create(options);
 
+    // Log the created order details and the key being sent
+    console.log('Subscription order created:', order.id);
+    console.log('Sending response with Key ID:', process.env.RAZORPAY_KEY_ID);
+
     res.json({
         success: true,
         orderId: order.id,

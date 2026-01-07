@@ -78,7 +78,7 @@ const HeroSection = () => {
                         initial={{ opacity: 0, y: 20, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-secondary/50 border border-white/10 backdrop-blur-md shadow-lg"
+                        className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-secondary/50 border border-gray-200 dark:border-white/10 backdrop-blur-md shadow-lg"
                     >
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -134,7 +134,7 @@ const HeroSection = () => {
                         </Link>
                         <Link
                             to="/docs"
-                            className="group px-8 py-4 rounded-full bg-secondary/50 border border-white/10 text-foreground font-semibold text-base transition-all duration-300 hover:bg-secondary hover:border-white/20 hover:scale-105 flex items-center gap-2"
+                            className="group px-8 py-4 rounded-full bg-secondary/50 border border-gray-200 dark:border-white/10 text-foreground font-semibold text-base transition-all duration-300 hover:bg-secondary hover:border-black/10 dark:hover:border-white/20 hover:scale-105 flex items-center gap-2"
                         >
                             Documentation <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                         </Link>
@@ -144,7 +144,7 @@ const HeroSection = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.6 }}
-                        className="grid grid-cols-3 gap-8 w-full border-t border-white/10 pt-8"
+                        className="grid grid-cols-3 gap-8 w-full border-t border-gray-200 dark:border-white/10 pt-8"
                     >
                         <StatItem number="50+" label="Premium Kits" icon={<Sparkles className="w-4 h-4" />} />
                         <StatItem number="2k+" label="Community" icon={<Star className="w-4 h-4" />} />

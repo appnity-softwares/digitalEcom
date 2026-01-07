@@ -199,13 +199,13 @@ const getSuggestions = asyncHandler(async (req, res) => {
 
     const searchTerm = q.trim();
 
-    const [products, docs] = await Promise.all([
+    const [products, docs, tools, components] = await Promise.all([
         prisma.product.findMany({
             where: {
                 title: { contains: searchTerm, mode: 'insensitive' }
             },
             select: { title: true, slug: true, category: true },
-            take: 5
+            take: 3
         }),
         prisma.premiumDoc.findMany({
             where: {
@@ -213,7 +213,22 @@ const getSuggestions = asyncHandler(async (req, res) => {
                 title: { contains: searchTerm, mode: 'insensitive' }
             },
             select: { title: true, slug: true },
-            take: 3
+            take: 2
+        }),
+        prisma.saasTool.findMany({
+            where: {
+                isActive: true,
+                name: { contains: searchTerm, mode: 'insensitive' }
+            },
+            select: { name: true, slug: true },
+            take: 2
+        }),
+        prisma.component.findMany({
+            where: {
+                title: { contains: searchTerm, mode: 'insensitive' }
+            },
+            select: { title: true, id: true }, // components usually use ID or slug? Checked controller: uses ID
+            take: 2
         })
     ]);
 
@@ -228,6 +243,16 @@ const getSuggestions = asyncHandler(async (req, res) => {
             text: d.title,
             type: 'doc',
             url: `/docs/${d.slug}`
+        })),
+        ...tools.map(t => ({
+            text: t.name,
+            type: 'tool',
+            url: `/saas/${t.slug}`
+        })),
+        ...components.map(c => ({
+            text: c.title,
+            type: 'component',
+            url: `/components` // Components page usually filters by search, specific component link might need ID if modal
         }))
     ];
 

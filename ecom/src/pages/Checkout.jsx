@@ -20,16 +20,32 @@ import api from "../services/api";
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
 
 // Load Razorpay script
+// Load Razorpay script
 const loadRazorpayScript = () => {
     return new Promise((resolve) => {
         if (window.Razorpay) {
             resolve(true);
             return;
         }
+
+        // Check if script is already present
+        const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+        if (existingScript) {
+            existingScript.onload = () => resolve(true);
+            existingScript.onerror = () => resolve(false);
+            return;
+        }
+
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
+        script.onload = () => {
+            console.log("Razorpay script loaded successfully");
+            resolve(true);
+        };
+        script.onerror = () => {
+            console.error("Razorpay script failed to load");
+            resolve(false);
+        };
         document.body.appendChild(script);
     });
 };
@@ -141,7 +157,8 @@ const Checkout = () => {
             // Load Razorpay script
             const loaded = await loadRazorpayScript();
             if (!loaded) {
-                showToast("Failed to load payment gateway", "error");
+                console.error("Razorpay SDK failed to load. Check your internet connection or ad blockers.");
+                showToast("Failed to load payment gateway. Please check your connection.", "error");
                 setIsProcessing(false);
                 return;
             }
@@ -152,6 +169,7 @@ const Checkout = () => {
             const amountInINR = Math.round(totalAmount * 83);
 
             // Create order on backend
+            console.log('Sending create-order request:', { amount: amountInINR, currency: "INR" });
             const orderResponse = await api.post("/payment/create-order", {
                 amount: amountInINR,
                 currency: "INR",
@@ -161,12 +179,21 @@ const Checkout = () => {
                     items_count: cartItems.length,
                 }
             });
+            console.log('Order response received:', orderResponse.data);
 
             if (!orderResponse.data?.order?.id) {
                 throw new Error("Failed to create order");
             }
 
             const { order, key_id } = orderResponse.data;
+            const finalKey = key_id || RAZORPAY_KEY_ID;
+
+            if (!finalKey) {
+                console.error("No Razorpay Key ID found in response or env");
+                throw new Error("Payment configuration missing (Key ID)");
+            }
+
+            console.log("Initializing Razorpay with Key ID:", finalKey);
 
             // Prepare order data for verification
             const orderData = {
@@ -187,20 +214,22 @@ const Checkout = () => {
 
             // Open Razorpay checkout
             const options = {
-                key: key_id || RAZORPAY_KEY_ID,
+                key: finalKey,
                 amount: order.amount,
                 currency: order.currency,
                 name: "DigitalStudio",
                 description: `Purchase of ${cartItems.length} item(s)`,
                 order_id: order.id,
                 prefill: {
-                    name: user.name,
-                    email: user.email,
+                    name: user.name || "",
+                    email: user.email || "",
+                    contact: user.mobile || ""
                 },
                 theme: {
                     color: "#8B5CF6",
                 },
                 handler: async function (response) {
+                    console.log("Payment successful, verifying...", response);
                     try {
                         // Verify payment on backend
                         const verifyResponse = await api.post("/payment/verify", {
@@ -225,18 +254,26 @@ const Checkout = () => {
                 },
                 modal: {
                     ondismiss: function () {
+                        console.log("Payment modal dismissed by user");
                         setIsProcessing(false);
                         showToast("Payment cancelled", "info");
                     },
                 },
             };
 
+            if (!window.Razorpay) {
+                console.error("window.Razorpay is undefined after script load");
+                throw new Error("Payment SDK not initialized");
+            }
+
             const razorpay = new window.Razorpay(options);
             razorpay.on("payment.failed", function (response) {
-                console.error("Payment failed:", response.error);
+                console.error("Payment failed event:", response.error);
                 showToast(`Payment failed: ${response.error.description}`, "error");
                 setIsProcessing(false);
             });
+
+            console.log("Opening Razorpay Modal...");
             razorpay.open();
 
         } catch (error) {

@@ -10,6 +10,105 @@ import { useToast } from "../context/ToastContext";
 import { useSaasTools, useGenerateApiKey } from "../hooks/useQueries";
 // api import removed as it is now handled by mutation
 
+const BUILTIN_TOOLS = [
+    {
+        title: "Screenshot API",
+        description: "Capture high-quality screenshots of any website. Perfect for thumbnails, previews, and social media cards.",
+        category: "API Services",
+        icon: (
+            <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="M21 15l-5-5L5 21" />
+            </svg>
+        ),
+        bgColor: "bg-blue-500/10",
+        badgeText: "Live Demo",
+        badgeColor: "bg-blue-500/10 text-blue-500",
+        isPremium: false,
+        features: ["Full Page Support", "Custom Viewport", "PNG/JPEG"],
+        limit: "100 req/day",
+        link: "/api-playground"
+    },
+    {
+        title: "Color Palette API",
+        description: "Extract dominant colors from any image. Generate beautiful color schemes for your designs.",
+        category: "AI Tools",
+        icon: (
+            <svg className="w-7 h-7 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="4" fill="currentColor" />
+                <path d="M12 2v4M12 18v4M22 12h-4M6 12H2" />
+            </svg>
+        ),
+        bgColor: "bg-purple-500/10",
+        badgeText: "Live Demo",
+        badgeColor: "bg-purple-500/10 text-purple-500",
+        isPremium: false,
+        features: ["Vibrant Colors", "Color Schemes", "CSS Output"],
+        limit: "100 req/day",
+        link: "/api-playground?tool=colors"
+    },
+    {
+        title: "QR Code Generator",
+        description: "Generate reliable QR codes for URLs, text, and data. Customizable sizes and error correction.",
+        category: "Code Utilities",
+        icon: (
+            <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <rect x="7" y="7" width="3" height="3" />
+                <rect x="14" y="7" width="3" height="3" />
+                <rect x="7" y="14" width="3" height="3" />
+                <path d="M14 17h3v-3" />
+            </svg>
+        ),
+        bgColor: "bg-amber-500/10",
+        badgeText: "Premium",
+        badgeColor: "bg-amber-500/10 text-amber-500",
+        isPremium: true,
+        features: ["High Resolution", "SVG/PNG", "Custom Style"],
+        limit: "Unlimited",
+        link: "/api-playground?tool=qr"
+    },
+    {
+        title: "User Agent Parser",
+        description: "Extract detailed device, OS, and browser information from User Agent strings reliably.",
+        category: "Code Utilities",
+        icon: (
+            <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
+        ),
+        bgColor: "bg-amber-500/10",
+        badgeText: "Premium",
+        badgeColor: "bg-amber-500/10 text-amber-500",
+        isPremium: true,
+        features: ["Device Detection", "OS Version", "Bot Detection"],
+        limit: "Unlimited",
+        link: "/api-playground?tool=ua"
+    },
+    {
+        title: "Simple Storage",
+        description: "Secure, scalable object storage for your applications. Upload and manage files with ease.",
+        category: "Storage",
+        icon: (
+            <svg className="w-7 h-7 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+        ),
+        bgColor: "bg-pink-500/10",
+        badgeText: "Beta",
+        badgeColor: "bg-pink-500/10 text-pink-500",
+        isPremium: false,
+        features: ["S3 Compatible", "CDN Enabled", "Secure"],
+        limit: "500MB Free",
+        link: "/api-playground?tool=storage"
+    }
+];
+
 const Saas = () => {
     const [selectedCategory, setSelectedCategory] = useState("");
     const { user } = useContext(AuthContext);
@@ -135,221 +234,65 @@ const Saas = () => {
                         Ready-to-use APIs you can try right now. No setup required.
                     </p>
 
-
-
                     <div className="grid md:grid-cols-2 gap-6">
-                        {/* Screenshot API */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="glass-card p-6 rounded-xl hover:bg-secondary/10 transition-colors group"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <path d="M21 15l-5-5L5 21" />
-                                    </svg>
+                        {BUILTIN_TOOLS.filter(t => !selectedCategory || t.category === selectedCategory).map((tool, index) => (
+                            <motion.div
+                                key={tool.title}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={`glass-card p-6 rounded-xl hover:bg-secondary/10 transition-colors group ${tool.isPremium ? 'border border-amber-500/30' : ''}`}
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`w-14 h-14 rounded-xl ${tool.bgColor} flex items-center justify-center`}>
+                                        {tool.icon}
+                                    </div>
+                                    <span className={`${tool.badgeColor} px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1`}>
+                                        {tool.isPremium && <Star className="w-3 h-3 fill-amber-500" />}
+                                        {tool.badgeText}
+                                    </span>
                                 </div>
-                                <span className="bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full text-xs font-medium">Live Demo</span>
-                            </div>
 
-                            <h3 className="text-xl font-bold text-foreground mb-2">
-                                Screenshot API
-                            </h3>
-                            <p className="text-muted-foreground text-sm mb-4">
-                                Capture high-quality screenshots of any website. Perfect for thumbnails, previews, and social media cards.
-                            </p>
+                                <h3 className="text-xl font-bold text-foreground mb-2">
+                                    {tool.title}
+                                </h3>
+                                <p className="text-muted-foreground text-sm mb-4">
+                                    {tool.description}
+                                </p>
 
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Full Page Support
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Custom Viewport
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> PNG/JPEG
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-border">
-                                <div>
-                                    <span className="text-xl font-bold text-green-500">Free</span>
-                                    <span className="text-xs text-muted-foreground block">100 req/day</span>
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {tool.features.map((feature, i) => (
+                                        <span key={i} className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Check className="w-3 h-3 text-green-500" /> {feature}
+                                        </span>
+                                    ))}
                                 </div>
-                                <Link
-                                    to="/api-playground"
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
-                                >
-                                    Try Demo
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
-                        </motion.div>
 
-                        {/* Color Palette API */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="glass-card p-6 rounded-xl hover:bg-secondary/10 transition-colors group"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <circle cx="12" cy="12" r="4" fill="currentColor" />
-                                        <path d="M12 2v4M12 18v4M22 12h-4M6 12H2" />
-                                    </svg>
+                                <div className="flex items-center justify-between pt-4 border-t border-border">
+                                    <div>
+                                        {tool.isPremium ? (
+                                            <span className="text-xl font-bold text-amber-500">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></span>
+                                        ) : (
+                                            <span className="text-xl font-bold text-green-500">Free</span>
+                                        )}
+                                        <span className="text-xs text-muted-foreground block">{tool.limit}</span>
+                                    </div>
+                                    <Link
+                                        to={tool.link}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
+                                    >
+                                        Try Demo
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
                                 </div>
-                                <span className="bg-purple-500/10 text-purple-500 px-3 py-1 rounded-full text-xs font-medium">Live Demo</span>
-                            </div>
-
-                            <h3 className="text-xl font-bold text-foreground mb-2">
-                                Color Palette API
-                            </h3>
-                            <p className="text-muted-foreground text-sm mb-4">
-                                Extract dominant colors from any image. Generate beautiful color schemes for your designs.
-                            </p>
-
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Vibrant Colors
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Color Schemes
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> CSS Output
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-border">
-                                <div>
-                                    <span className="text-xl font-bold text-green-500">Free</span>
-                                    <span className="text-xs text-muted-foreground block">100 req/day</span>
-                                </div>
-                                <Link
-                                    to="/api-playground?tool=colors"
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
-                                >
-                                    Try Demo
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
-                        </motion.div>
-
-                        {/* QR Code API - Premium */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="glass-card p-6 rounded-xl hover:bg-secondary/10 transition-colors group border border-amber-500/30"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                        <rect x="7" y="7" width="3" height="3" />
-                                        <rect x="14" y="7" width="3" height="3" />
-                                        <rect x="7" y="14" width="3" height="3" />
-                                        <path d="M14 17h3v-3" />
-                                    </svg>
-                                </div>
-                                <span className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-500" /> Premium
-                                </span>
-                            </div>
-
-                            <h3 className="text-xl font-bold text-foreground mb-2">
-                                QR Code Generator
-                            </h3>
-                            <p className="text-muted-foreground text-sm mb-4">
-                                Generate reliable QR codes for URLs, text, and data. Customizable sizes and error correction.
-                            </p>
-
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> High Resolution
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> SVG/PNG
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Custom Style
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-border">
-                                <div>
-                                    <span className="text-xl font-bold text-amber-500">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></span>
-                                    <span className="text-xs text-muted-foreground block">Unlimited</span>
-                                </div>
-                                <Link
-                                    to="/api-playground?tool=qr"
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
-                                >
-                                    Try Demo
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
-                        </motion.div>
-
-                        {/* UA Parser API - Premium */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="glass-card p-6 rounded-xl hover:bg-secondary/10 transition-colors group border border-amber-500/30"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                                        <line x1="12" y1="18" x2="12.01" y2="18" />
-                                    </svg>
-                                </div>
-                                <span className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-500" /> Premium
-                                </span>
-                            </div>
-
-                            <h3 className="text-xl font-bold text-foreground mb-2">
-                                User Agent Parser
-                            </h3>
-                            <p className="text-muted-foreground text-sm mb-4">
-                                Extract detailed device, OS, and browser information from User Agent strings reliably.
-                            </p>
-
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Device Detection
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> OS Version
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-green-500" /> Bot Detection
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-border">
-                                <div>
-                                    <span className="text-xl font-bold text-amber-500">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></span>
-                                    <span className="text-xs text-muted-foreground block">Unlimited</span>
-                                </div>
-                                <Link
-                                    to="/api-playground?tool=ua"
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
-                                >
-                                    Try Demo
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
-                        </motion.div>
+                            </motion.div>
+                        ))}
                     </div>
+                    {BUILTIN_TOOLS.filter(t => !selectedCategory || t.category === selectedCategory).length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground">
+                            No tools found in this category.
+                        </div>
+                    )}
                 </div>
             </section>
 

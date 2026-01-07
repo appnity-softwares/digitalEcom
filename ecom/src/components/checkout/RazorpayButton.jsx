@@ -42,6 +42,8 @@ const RazorpayButton = ({
                 await new Promise(resolve => script.onload = resolve);
             }
 
+            console.log('RazorpayButton: Order created on backend:', data);
+
             // Razorpay options
             const options = {
                 key: data.keyId,

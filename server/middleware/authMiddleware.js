@@ -12,9 +12,11 @@ const protect = asyncHandler(async (req, res, next) => {
         try {
             // Get token from header
             token = req.headers.authorization.split(' ')[1];
+            console.log('Auth Middleware: Verifying token...');
 
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log('Auth Middleware: Token verified for user ID:', decoded.id);
 
             // Get user from the token using Prisma
             req.user = await prisma.user.findUnique({
@@ -29,13 +31,14 @@ const protect = asyncHandler(async (req, res, next) => {
             });
 
             if (!req.user) {
+                console.log('Auth Middleware: User not found in DB for ID:', decoded.id);
                 res.status(401);
                 throw new Error('User not found');
             }
 
             next();
         } catch (error) {
-            // Don't log error details in production to avoid info leakage
+            console.error('Auth Middleware Verification Failed:', error.message);
             res.status(401);
             throw new Error('Not authorized');
         }

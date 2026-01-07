@@ -104,7 +104,7 @@ const Wishlist = () => {
                                 <div className="px-5 pb-5">
                                     <button
                                         onClick={() => handleAddToCart(item)}
-                                        className="w-full flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground font-semibold py-3 rounded-xl transition-all hover:scale-[1.02] border border-white/5"
+                                        className="w-full flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground font-semibold py-3 rounded-xl transition-all hover:scale-[1.02] border border-gray-200 dark:border-white/5"
                                     >
                                         <ShoppingCart className="w-4 h-4" />
                                         Add to Cart
