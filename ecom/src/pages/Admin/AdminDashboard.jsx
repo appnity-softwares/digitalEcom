@@ -6,17 +6,25 @@ import {
     UserPlus, Star, DollarSign, Activity,
     Package, ShoppingCart, RefreshCw
 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardStats, useAllOrders, useAllUsers } from '../../hooks/useQueries';
 
 const AdminDashboard = () => {
     const queryClient = useQueryClient();
+    const { success } = useToast();
     const { data: stats = {}, isLoading: statsLoading } = useDashboardStats();
     const { data: allOrders = [], isLoading: ordersLoading } = useAllOrders();
     const { data: allUsers = [], isLoading: usersLoading } = useAllUsers();
+    const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-    const handleRefresh = () => {
-        queryClient.invalidateQueries({ queryKey: ['admin'] });
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await queryClient.invalidateQueries({ queryKey: ['admin'] });
+        setTimeout(() => {
+            setIsRefreshing(false);
+            success('Dashboard data refreshed!');
+        }, 500);
     };
 
     const statCards = [
@@ -96,10 +104,11 @@ const AdminDashboard = () => {
                 </div>
                 <button
                     onClick={handleRefresh}
-                    className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-xl transition-colors"
+                    disabled={isRefreshing}
+                    className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-xl transition-colors disabled:opacity-50"
                 >
-                    <RefreshCw className="w-4 h-4" />
-                    Refresh Data
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
                 </button>
             </motion.div>
 

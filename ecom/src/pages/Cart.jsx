@@ -24,28 +24,7 @@ const Cart = () => {
         if (!user) {
             navigate('/login?redirect=cart');
         } else {
-            const orderItems = cartItems.map(item => ({
-                product: item._id || item.id,
-                title: item.title,
-                image: item.image,
-                price: typeof item.price === 'number' ? item.price : parseFloat(item.price.replace(/[^0-9.-]+/g, "")),
-                qty: 1
-            }));
-
-            try {
-                await orderService.create({
-                    orderItems,
-                    paymentMethod: 'Credit Card',
-                    totalPrice: total
-                });
-
-                success('Order placed successfully! 🎉');
-                clearCart();
-                navigate('/profile');
-            } catch (err) {
-                console.error(err);
-                error('Order failed. Please try again.');
-            }
+            navigate('/checkout');
         }
     };
 
@@ -122,7 +101,7 @@ const Cart = () => {
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <span className="text-xl font-bold text-primary">{item.price}</span>
+                                        <span className="text-xl font-bold text-primary">{typeof item.price === 'number' ? `₹${item.price}` : item.price}</span>
                                     </div>
                                     <button
                                         onClick={() => removeFromCart(item._id || item.id)}
@@ -148,15 +127,15 @@ const Cart = () => {
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Subtotal</span>
-                                    <span className="font-semibold text-foreground">${total}</span>
+                                    <span className="font-semibold text-foreground">₹{total}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">Tax</span>
-                                    <span className="font-semibold text-foreground">$0</span>
+                                    <span className="text-muted-foreground">Included GST</span>
+                                    <span className="font-semibold text-foreground">**</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">Discount</span>
-                                    <span className="text-green-500 font-medium">-$0</span>
+                                    <span className="text-green-500 font-medium">-₹0</span>
                                 </div>
                             </div>
 
@@ -164,7 +143,7 @@ const Cart = () => {
 
                             <div className="flex justify-between items-center mb-8">
                                 <span className="text-xl font-bold text-foreground">Total</span>
-                                <span className="text-3xl font-display font-bold text-primary">${total}</span>
+                                <span className="text-3xl font-display font-bold text-primary">₹{total}</span>
                             </div>
 
                             <button
@@ -176,7 +155,7 @@ const Cart = () => {
                             </button>
 
                             <p className="text-xs text-muted-foreground text-center mt-4">
-                                Secure checkout powered by Stripe
+                                Secure checkout powered by Razorpay
                             </p>
                         </div>
                     </motion.div>

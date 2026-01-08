@@ -1,17 +1,23 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
 import CartContext from '../context/CartContext';
 import WishlistContext from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import StarRating from './ui/StarRating';
 
 const ProductHeader = ({ product }) => {
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, cartItems } = useContext(CartContext);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useContext(WishlistContext);
   const navigate = useNavigate();
-  const { success } = useToast();
+  const { success, error } = useToast();
 
   const handleAddToCart = () => {
+    const isInCart = cartItems.find(item => (item._id || item.id) === (product._id || product.id));
+    if (isInCart) {
+      error("Already added to cart!");
+      return;
+    }
     addToCart(product);
     success(`${product.title} added to cart!`);
   };
@@ -35,7 +41,7 @@ const ProductHeader = ({ product }) => {
   const {
     title = "AI Chatbot",
     description = "Transform customer engagement with intelligent AI solutions",
-    price = "$79",
+    price = "₹79",
     previewUrl = "#"
   } = product || {};
 
@@ -51,15 +57,15 @@ const ProductHeader = ({ product }) => {
   ];
 
   return (
-    <div className="w-full bg-[#F5F5F7] px-6 py-20 min-h-[50vh] flex flex-col justify-center font-sans border-b border-gray-200/50">
+    <div className="w-full bg-background px-6 py-20 min-h-[50vh] flex flex-col justify-center font-sans border-b border-border">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-10 w-full pt-10">
 
         {/* 1. TITLE & SUBTITLE */}
         <div className="flex flex-col gap-4">
-          <h1 className="text-6xl md:text-7xl lg:text-[6rem] font-black text-black tracking-tighter leading-none">
+          <h1 className="text-6xl md:text-7xl lg:text-[6rem] font-black text-foreground tracking-tighter leading-none">
             {title}
           </h1>
-          <p className="text-gray-500 text-xl font-medium max-w-2xl leading-relaxed">
+          <p className="text-muted-foreground text-xl font-medium max-w-2xl leading-relaxed">
             {description}
           </p>
 
@@ -69,7 +75,7 @@ const ProductHeader = ({ product }) => {
               <StarRating rating={product.rating} numReviews={product.numReviews} size="md" />
             )}
             {product && product.numSales > 0 && (
-              <span className="text-gray-500 text-sm">
+              <span className="text-muted-foreground text-sm">
                 🔥 {product.numSales} sales
               </span>
             )}
@@ -78,9 +84,9 @@ const ProductHeader = ({ product }) => {
           {/* Tech Stack */}
           {product && product.techStack && product.techStack.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
-              <span className="text-sm font-medium text-gray-600 mr-2">Tech Stack:</span>
+              <span className="text-sm font-medium text-muted-foreground mr-2">Tech Stack:</span>
               {product.techStack.map((tech, idx) => (
-                <span key={idx} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span key={idx} className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
                   {tech}
                 </span>
               ))}
@@ -97,11 +103,14 @@ const ProductHeader = ({ product }) => {
             {/* Buttons */}
             <div className="flex flex-wrap items-center gap-4">
               {/* Add To Cart Button */}
+              {/* Wishlist Button */}
               <button
-                onClick={handleAddToCart}
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg active:scale-95"
+                onClick={handleWishlist}
+                className={`flex items-center gap-2 bg-white hover:bg-gray-50 text-black px-4 py-4 rounded-full font-bold text-lg transition-all shadow-sm active:scale-95 border ${isInWishlist(id) ? 'border-red-200 text-red-500' : 'border-transparent'}`}
               >
-                Add to Cart
+                <svg className={`w-6 h-6 ${isInWishlist(id) ? 'fill-current text-red-500' : 'text-black'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
               </button>
 
               {/* Buy Now Button */}
@@ -116,17 +125,14 @@ const ProductHeader = ({ product }) => {
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                   </svg>
                 </div>
-                Buy Now {price}
+                Buy Now {typeof price === 'number' ? `₹${price}` : price}
               </button>
-
-              {/* Wishlist Button */}
               <button
-                onClick={handleWishlist}
-                className={`flex items-center gap-2 bg-white hover:bg-gray-50 text-black px-4 py-4 rounded-full font-bold text-lg transition-all shadow-sm active:scale-95 border ${isInWishlist(id) ? 'border-red-200 text-red-500' : 'border-transparent'}`}
+                onClick={handleAddToCart}
+                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white w-14 h-14 rounded-full font-bold text-lg transition-all shadow-lg active:scale-95"
+                title="Add to Cart"
               >
-                <svg className={`w-6 h-6 ${isInWishlist(id) ? 'fill-current text-red-500' : 'text-black'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                <ShoppingCart className="w-6 h-6" />
               </button>
 
               {/* Preview Button */}
@@ -134,25 +140,26 @@ const ProductHeader = ({ product }) => {
                 href={previewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-white hover:bg-gray-50 text-black px-8 py-4 rounded-full font-bold text-lg transition-all shadow-sm active:scale-95 border border-gray-100"
+                className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground px-8 py-4 rounded-full font-bold text-lg transition-all shadow-sm active:scale-95 border border-border"
               >
                 {/* Framer Icon */}
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-black">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-foreground">
                   <path d="M4 0h16v8h-8zM4 8h8l8 8h-16zM4 16h8v8z" />
                 </svg>
                 Preview
               </a>
+
             </div>
 
             {/* Trust Badge: Lemon Squeezy */}
-            <div className="flex items-center gap-2 text-gray-500 font-medium text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground font-medium text-sm">
               <span>Payments secured by</span>
-              <div className="flex items-center gap-1.5 text-black font-bold opacity-80">
+              <div className="flex items-center gap-1.5 text-foreground font-bold opacity-80">
                 {/* Lemon Squeezy Icon SVG */}
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
                   <path d="M19.4 6.7c-2.4-2.7-6.3-2.7-8.7 0L12 5.5l1.3 1.2c1.7-1.9 4.4-1.9 6.1 0 1.7 1.9 1.7 5 0 6.9l-6.1 6.8-1.3-1.4 4.8-5.4c1.2-1.3 1.2-3.5 0-4.8l2.6 2.1zM4.6 17.3c2.4 2.7 6.3 2.7 8.7 0L12 18.5l-1.3-1.2c-1.7 1.9-4.4 1.9-6.1 0-1.7-1.9-1.7-5 0-6.9l6.1-6.8 1.3 1.4-4.8 5.4c-1.2 1.3-1.2 3.5 0 4.8l-2.6-2.1z" />
                 </svg>
-                <span>lemon squeezy</span>
+                <span>Razorpay</span>
               </div>
             </div>
 
@@ -166,7 +173,7 @@ const ProductHeader = ({ product }) => {
               {avatars.map((src, index) => (
                 <div
                   key={index}
-                  className="relative w-12 h-12 rounded-full overflow-hidden -ml-3 border-[3px] border-[#F5F5F7] z-0 hover:z-10 hover:scale-110 transition-transform duration-200"
+                  className="relative w-12 h-12 rounded-full overflow-hidden -ml-3 border-[3px] border-background z-0 hover:z-10 hover:scale-110 transition-transform duration-200"
                   style={{ zIndex: avatars.length - index }}
                 >
                   <img
@@ -181,7 +188,7 @@ const ProductHeader = ({ product }) => {
             {/* Rating Details */}
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-gray-600">4.9/5</span>
+                <span className="text-lg font-bold text-muted-foreground">4.9/5</span>
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} className="w-4 h-4 text-[#0055FF]" viewBox="0 0 24 24" fill="currentColor">
@@ -190,7 +197,7 @@ const ProductHeader = ({ product }) => {
                   ))}
                 </div>
               </div>
-              <p className="text-gray-500 font-medium text-sm">
+              <p className="text-muted-foreground font-medium text-sm">
                 Loved by 1000+ creators
               </p>
             </div>

@@ -4,28 +4,31 @@ const asyncHandler = require('express-async-handler');
 const prisma = require('../config/prisma');
 const crypto = require('crypto');
 
-// Cloudflare R2 configuration (S3-compatible)
-const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'codestudio-downloads';
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
 
-// Initialize R2 client (S3-compatible)
-let r2Client = null;
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../uploads/products');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-const getR2Client = () => {
-    if (!r2Client && R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY) {
-        r2Client = new S3Client({
-            region: 'auto',
-            endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-            credentials: {
-                accessKeyId: R2_ACCESS_KEY_ID,
-                secretAccessKey: R2_SECRET_ACCESS_KEY,
-            },
-        });
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const ext = file.originalname.split('.').pop();
+        const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
+        cb(null, uniqueName);
     }
-    return r2Client;
-};
+});
+
+const upload = multer({ storage });
+exports.uploadMiddleware = upload.single('file');
 
 // @desc    Get signed download URL for a purchased product
 // @route   GET /api/downloads/:productId
@@ -79,36 +82,27 @@ const getDownloadUrl = asyncHandler(async (req, res) => {
         throw new Error('Product not found');
     }
 
-    const client = getR2Client();
+    // Local File Download Logic
+    if (product.downloadFile) {
+        // Generate a temporary access token for the file stream
+        const downloadToken = jwt.sign(
+            { userId, productId, orderId: order.id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
 
-    // If R2 is configured and product has file in R2
-    if (client && product.downloadFile) {
-        const command = new GetObjectCommand({
-            Bucket: R2_BUCKET_NAME,
-            Key: product.downloadFile,
-        });
-
-        // Generate signed URL valid for 1 hour
-        const signedUrl = await getSignedUrl(client, command, {
-            expiresIn: 3600 // 1 hour
-        });
-
-        // Log download
-        await prisma.downloadLog.create({
-            data: {
-                userId,
-                productId,
-                orderId: order.id,
-                ipAddress: req.ip,
-            },
-        }).catch(() => { }); // Don't fail if logging fails
+        // Return a URL that the frontend can redirect to
+        // Points to: /api/download/stream/:productId?token=...
+        const localDownloadUrl = `/api/download/stream/${productId}?token=${downloadToken}`;
 
         res.json({
             success: true,
-            downloadUrl: signedUrl,
-            fileName: product.downloadFile.split('/').pop(),
+            downloadUrl: localDownloadUrl,
+            fileName: product.downloadFile, // Just filename
             expiresIn: 3600,
+            isLocal: true
         });
+        return;
     }
     // Fallback to direct URL if no R2
     else if (product.downloadUrl) {
@@ -161,7 +155,7 @@ const checkDownloadAccess = asyncHandler(async (req, res) => {
     });
 });
 
-// @desc    Upload product file to R2 (admin only)
+// @desc    Upload product file to Local Storage (admin only)
 // @route   POST /api/downloads/upload/:productId
 // @access  Admin
 const uploadProductFile = asyncHandler(async (req, res) => {
@@ -173,40 +167,84 @@ const uploadProductFile = asyncHandler(async (req, res) => {
         throw new Error('No file uploaded');
     }
 
-    const client = getR2Client();
-    if (!client) {
-        res.status(500);
-        throw new Error('R2 storage not configured');
-    }
+    // File is already saved by multer middleware at this point
+    // Filename is in req.file.filename
 
-    // Generate unique filename
-    const ext = file.originalname.split('.').pop();
-    const uniqueName = `products/${productId}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
-
-    const command = new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: uniqueName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-    });
-
-    await client.send(command);
-
-    // Update product with file path
+    // Update product with filename
     await prisma.product.update({
         where: { id: productId },
-        data: { downloadFile: uniqueName },
+        data: { downloadFile: file.filename },
     });
 
     res.json({
         success: true,
         message: 'File uploaded successfully',
-        filePath: uniqueName,
+        filePath: file.filename,
     });
+});
+
+// @desc    Stream local file
+// @route   GET /api/download/stream/:productId
+// @access  Public (Protected by Query Token)
+const streamLocalFile = asyncHandler(async (req, res) => {
+    const { productId } = req.params;
+    const { token } = req.query;
+
+    if (!token) {
+        res.status(401);
+        throw new Error('No download token provided');
+    }
+
+    try {
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Double check productId match
+        if (decoded.productId !== productId) {
+            throw new Error('Invalid token for this product');
+        }
+
+        // Get product file path
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: { downloadFile: true, title: true }
+        });
+
+        if (!product || !product.downloadFile) {
+            res.status(404);
+            throw new Error('File not found');
+        }
+
+        const filePath = path.join(__dirname, '../uploads/products', product.downloadFile);
+
+        if (!fs.existsSync(filePath)) {
+            res.status(404);
+            throw new Error('Physical file missing on server');
+        }
+
+        // Log download (using decoded info)
+        await prisma.downloadLog.create({
+            data: {
+                userId: decoded.userId,
+                productId: decoded.productId,
+                orderId: decoded.orderId,
+                ipAddress: req.ip,
+            },
+        }).catch(() => { });
+
+        // Serve file
+        res.download(filePath, `${product.title.replace(/[^a-z0-9]/gi, '_')}.zip`);
+
+    } catch (error) {
+        console.error('Download stream error:', error);
+        res.status(403).send('Download link expired or invalid');
+    }
 });
 
 module.exports = {
     getDownloadUrl,
     checkDownloadAccess,
     uploadProductFile,
+    streamLocalFile, // Export new controller
+    uploadMiddleware: exports.uploadMiddleware // Re-export multer middleware
 };

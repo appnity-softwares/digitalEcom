@@ -19,50 +19,41 @@ const Templates = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
 
+    // Sorting Logic
+    const getSortParams = () => {
+        switch (sortBy) {
+            case 'price-low': return { sort: 'price', order: 'asc' };
+            case 'price-high': return { sort: 'price', order: 'desc' };
+            case 'rating': return { sort: 'rating', order: 'desc' };
+            case 'popular': return { sort: 'numSales', order: 'desc' };
+            case 'newest': default: return { sort: 'createdAt', order: 'desc' };
+        }
+    };
+    const { sort, order } = getSortParams();
+
     // React Query hook for fetching products
     const { data: productsData, isLoading: loading, error, refetch } = useProducts({
         search: keyword,
-        page: 1,
-        limit: 100 // Fetch more for client-side filtering
+        category: selectedCategory === 'all' ? null : selectedCategory,
+        productType: selectedProductType === 'all' ? null : selectedProductType,
+        sort,
+        order,
+        page: currentPage,
+        limit: itemsPerPage
     });
 
-    const templates = productsData?.products || productsData || [];
+    const productsResponse = productsData?.products ? productsData : { products: productsData || [], pagination: {} };
+    const templates = Array.isArray(productsResponse.products) ? productsResponse.products : [];
+    const pagination = productsResponse.pagination || {};
+    const totalPages = pagination.pages || 1;
 
-    // Client-side filtering (defensive: ensure templates is an array)
-    const templatesList = Array.isArray(templates) ? templates : [];
-    const filteredTemplates = templatesList.filter(template => {
-        if (selectedCategory !== 'all' && template.category !== selectedCategory) {
-            return false;
-        }
-        if (selectedProductType !== 'all' && template.productType !== selectedProductType) {
-            return false;
-        }
-        return true;
-    });
-
-    // Sorting
-    const sortedTemplates = [...filteredTemplates].sort((a, b) => {
-        switch (sortBy) {
-            case 'price-low':
-                return parseFloat(a.price.replace(/[^0-9.]/g, '')) - parseFloat(b.price.replace(/[^0-9.]/g, ''));
-            case 'price-high':
-                return parseFloat(b.price.replace(/[^0-9.]/g, '')) - parseFloat(a.price.replace(/[^0-9.]/g, ''));
-            case 'rating':
-                return (b.rating || 0) - (a.rating || 0);
-            case 'popular':
-                return (b.numSales || 0) - (a.numSales || 0);
-            case 'newest':
-            default:
-                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        }
-    });
-
-    // Pagination
-    const totalPages = Math.ceil(sortedTemplates.length / itemsPerPage);
-    const paginatedTemplates = sortedTemplates.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    // Derived categories (Optional: Ideally fetch from separate API, but this works for now if we want "all" available)
+    // Note: If using backend filtering, this list might shrink to only current results if we rely ONLY on `templates`. 
+    // Ideally we should keep a separate list of ALL categories or fetch them. 
+    // For now, I will leave the dynamic extraction BUT it will only show categories in the CURRENT page/filter context.
+    // Better UX: Static list or fetch categories separately. I'll stick to dynamic for now but check safety.
+    const categories = ['all', 'SaaS', 'Ecommerce', 'Dashboard', 'Portfolio', 'Landing Page', 'Mobile App']; // Hardcoded for better UX or fetch from /categories endpoint if exists.
+    // const categories = ['all', ...new Set(templates.map(t => t.category).filter(Boolean))];
 
     // Reset to page 1 when filters change
     const handleFilterChange = (setter, value) => {
@@ -70,8 +61,7 @@ const Templates = () => {
         setCurrentPage(1);
     };
 
-    // Get unique categories and types (defensive)
-    const categories = ['all', ...new Set(templatesList.map(t => t.category).filter(Boolean))];
+
     const productTypes = [
         { value: 'all', label: 'All Products' },
         { value: 'fullstack', label: 'Full-Stack Projects' },
@@ -91,7 +81,7 @@ const Templates = () => {
             />
 
             {/* Filter Bar */}
-            <div className="w-full sticky top-20 z-40 px-6 pb-6 pt-2">
+            <div className="w-full px-6 pb-6 pt-2">
                 <div className="max-w-7xl mx-auto">
                     <div className="glass-nav rounded-2xl px-6 py-4 border border-white/5 shadow-2xl shadow-black/50">
                         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -166,7 +156,7 @@ const Templates = () => {
                             {/* Right: Sort & Count */}
                             <div className="flex items-center justify-between w-full md:w-auto gap-4">
                                 <span className="text-sm text-muted-foreground font-medium hidden md:inline-block">
-                                    {sortedTemplates.length} results
+                                    {pagination.total || templates.length} results
                                 </span>
                                 <select
                                     value={sortBy}
@@ -205,7 +195,7 @@ const Templates = () => {
                             </button>
                         </div>
                     </div>
-                ) : sortedTemplates.length === 0 ? (
+                ) : templates.length === 0 ? (
                     <div className="min-h-[40vh] flex flex-col items-center justify-center py-12">
                         <div className="text-center max-w-md p-8 rounded-3xl bg-card border border-white/5 shadow-2xl">
                             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
@@ -227,7 +217,7 @@ const Templates = () => {
                     </div>
                 ) : (
                     <div className="pb-12">
-                        <TemplateGrid items={paginatedTemplates} />
+                        <TemplateGrid items={templates} bento={true} />
 
                         {/* Pagination */}
                         <div className="mt-12">
@@ -235,7 +225,7 @@ const Templates = () => {
                                 currentPage={currentPage}
                                 totalPages={totalPages}
                                 onPageChange={setCurrentPage}
-                                totalItems={sortedTemplates.length}
+                                totalItems={pagination.total || templates.length}
                                 itemsPerPage={itemsPerPage}
                             />
                         </div>

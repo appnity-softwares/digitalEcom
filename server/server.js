@@ -108,7 +108,7 @@ app.use('/api/tool-categories', require('./routes/toolCategoryRoutes'));
 app.use('/api/razorpay', require('./routes/razorpayRoutes'));
 app.use('/api/components', require('./routes/componentRoutes'));
 app.use('/api/templates', require('./routes/templateRoutes'));
-app.use('/api/docs', require('./routes/docRoutes'));
+// app.use('/api/docs', require('./routes/docRoutes')); // Duplicate - Use docsRoutes instead
 app.use('/api/apitools', require('./routes/toolRoutes'));
 app.use('/api/apps', require('./routes/appRoutes'));
 app.use('/api/template-requests', require('./routes/templateRequestRoutes'));

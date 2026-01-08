@@ -12,14 +12,17 @@ import { getAppCategories, getApps, trackAppDownload } from '../services/appServ
 // ============================================
 
 export const useProducts = (filters = {}) => {
-    const { category, search, page = 1, limit = 12 } = filters;
+    const { category, search, productType, sort, order, page = 1, limit = 12 } = filters;
 
     return useQuery({
-        queryKey: ['products', { category, search, page, limit }],
+        queryKey: ['products', { category, search, productType, sort, order, page, limit }],
         queryFn: async () => {
             const params = new URLSearchParams();
-            if (category) params.append('category', category);
+            if (category && category !== 'all') params.append('category', category);
+            if (productType && productType !== 'all') params.append('productType', productType);
             if (search) params.append('search', search);
+            if (sort) params.append('sort', sort);
+            if (order) params.append('order', order);
             params.append('page', page);
             params.append('limit', limit);
 

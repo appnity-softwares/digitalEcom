@@ -170,15 +170,23 @@ const Checkout = () => {
 
             // Create order on backend
             console.log('Sending create-order request:', { amount: amountInINR, currency: "INR" });
-            const orderResponse = await api.post("/payment/create-order", {
-                amount: amountInINR,
-                currency: "INR",
-                receipt: `order_${Date.now()}`,
-                notes: {
-                    user_id: user.id || user._id,
-                    items_count: cartItems.length,
-                }
-            });
+            let orderResponse;
+            try {
+                orderResponse = await api.post("/payment/create-order", {
+                    amount: amountInINR,
+                    currency: "INR",
+                    receipt: `order_${Date.now()}`,
+                    notes: {
+                        user_id: user.id || user._id,
+                        items_count: cartItems.length,
+                    }
+                });
+            } catch (err) {
+                console.error("Create Order Error:", err);
+                alert("Payment Initialization Failed: " + (err.response?.data?.message || err.message || "Unknown Error"));
+                setIsProcessing(false);
+                return;
+            }
             console.log('Order response received:', orderResponse.data);
 
             if (!orderResponse.data?.order?.id) {

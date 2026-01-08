@@ -39,7 +39,10 @@ const RazorpayButton = ({
                 script.src = 'https://checkout.razorpay.com/v1/checkout.js';
                 script.async = true;
                 document.body.appendChild(script);
-                await new Promise(resolve => script.onload = resolve);
+                await new Promise((resolve, reject) => {
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
+                });
             }
 
             console.log('RazorpayButton: Order created on backend:', data);
